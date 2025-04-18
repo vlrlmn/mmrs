@@ -1,0 +1,17 @@
+const socket = new WebSocket("wss://localhost:3000/matchmaking");
+
+socket.onopen = () => {
+  console.log("WebSocket connected");
+};
+
+socket.onmessage = (msg) => {
+  console.log("Message from server:", msg.data);
+};
+
+socket.onerror = (err) => {
+  console.error("WebSocket error:", err);
+};
+
+socket.onclose = () => {
+  console.log("WebSocket closed");
+};

@@ -17,7 +17,6 @@ const routes: IHandler[] = [
 ]
 
 export async function registerRestRoutes(app: FastifyInstance) {
-  // await registerWsRoutes(app)
   for (const route of routes) {
     app.route({
       method: route.method,

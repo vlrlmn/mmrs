@@ -3,7 +3,6 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 const waitingPlayers: any[] = []
 
 export async function registerWsRoutes(app: FastifyInstance) {
-
   app.get('/matchmaking', { websocket: true }, (socket: any, req: FastifyRequest) => {
     console.log("Looking for a player")
     socket.send('something in resp');

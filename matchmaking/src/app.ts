@@ -1,10 +1,18 @@
 import Fastify from 'fastify'
 import websocket from '@fastify/websocket'
-
 import { registerWsRoutes } from './api/ws/ws'
 import { registerRestRoutes } from './api/rest/rest'
+import { readFileSync } from 'fs'
 
-const app =  Fastify();
+const options = {
+  key: readFileSync('./localhost+2-key.pem'),
+  cert: readFileSync('./localhost+2.pem'),
+}
+
+const app = Fastify({
+  logger: true,
+  https: options
+})
 
 async function main() {
   await app.register(websocket);
