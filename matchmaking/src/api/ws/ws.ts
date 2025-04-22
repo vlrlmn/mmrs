@@ -1,23 +1,31 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
+import { MatchmakingService } from '../../domain/matchmaking/MatchmakingService'
 
-const waitingPlayers: any[] = []
+const matchmaker = new MatchmakingService()
 
 export async function registerWsRoutes(app: FastifyInstance) {
   app.get('/matchmaking', { websocket: true }, (socket: any, req: FastifyRequest) => {
-    console.log("Looking for a player")
-    socket.send('something in resp');
-
-    waitingPlayers.push(socket)
-    if (waitingPlayers.length >= 2) {
-        const player1 = waitingPlayers.shift()
-        const player2 = waitingPlayers.shift()
-        player1.send(JSON.stringify({ type: 'match_found', opponent: 'Player2' }))
-        player2.send(JSON.stringify({ type: 'match_found', opponent: 'Player1' }))
+    
+    const { id, name, mmr } = req.query as any
+    
+    const player = {
+      id, 
+      name,
+      mmr: parseInt(mmr),
+      socket,
+      joinedAt: Date.now()
     }
+
+    console.log(`${name} (${id} joined waiting for a match)`)
+    matchmaker.addPlayer(player)
+    socket.send(JSON.stringify( { type: 'waiting' }))
+
     socket.on('close', () => {
-        console.log('Player disconnected')
-        const index = waitingPlayers.indexOf(socket)
-        if (index !== -1) waitingPlayers.splice(index, 1)
+      matchmaker.removePlayer(id)
+      console.log(`${name} (${id}) left matchmaking`)
       })
   })
+  setInterval(() => {
+    matchmaker.processQueue()
+  }, 1000)
 }
