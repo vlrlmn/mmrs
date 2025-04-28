@@ -2,36 +2,47 @@
 const socket1 = new WebSocket("wss://localhost:3000/matchmaking?id=1&name=Alice&mmr=1000");
 
 socket1.onopen = () => {
-  console.log("WebSocket connected");
+  console.log("WebSocket connected (socket1)");
 };
 
 socket1.onmessage = (msg) => {
-  console.log("Message from server:", msg.data);
+  console.log("Message from server (socket1):", msg.data);
+
+  const data = JSON.parse(msg.data);
+
+  if (data.type === 'confirm_match') {
+    socket1.send(JSON.stringify({ type: 'confirm_match' }));
+  }
 };
 
 socket1.onerror = (err) => {
-  console.error("WebSocket error:", err);
+  console.error("WebSocket error (socket1):", err);
 };
 
 socket1.onclose = () => {
-  console.log("WebSocket closed");
+  console.log("WebSocket closed (socket1)");
 };
 
 // Console 2
 const socket2 = new WebSocket("wss://localhost:3000/matchmaking?id=2&name=Bob&mmr=1010");
+
 socket2.onopen = () => {
-  console.log("WebSocket connected");
+  console.log("WebSocket connected (socket2)");
 };
 
 socket2.onmessage = (msg) => {
-  console.log("Message from server:", msg.data);
+  console.log("Message from server (socket2):", msg.data);
+
+  const data = JSON.parse(msg.data);
+  if (data.type === 'confirm_match') {
+    socket2.send(JSON.stringify({ type: 'confirm_match' }));
+  }
 };
 
 socket2.onerror = (err) => {
-  console.error("WebSocket error:", err);
+  console.error("WebSocket error (socket2):", err);
 };
 
 socket2.onclose = () => {
-  console.log("WebSocket closed");
+  console.log("WebSocket closed (socket2)");
 };
-
