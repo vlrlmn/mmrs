@@ -1,4 +1,4 @@
-import { Player } from "./MatchmakingService";
+import { Player, PendingMatch } from "./MatchmakingService";
 
 export interface IMatchmaking {
     addPlayer(player: Player): void;
@@ -6,4 +6,6 @@ export interface IMatchmaking {
     processQueue(): void;
     confirmMatch(playerId: string): boolean;
     checkPendingMatches(): void;
+    findPendingMatch(playerId: string): PendingMatch | undefined ;
+    removePendingMatch(match: PendingMatch): void ;
 }

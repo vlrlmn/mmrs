@@ -19,13 +19,19 @@
         <br><br>
         <button id="connectBtn">Connect</button>
         <button id="confirmBtn" disabled>Confirm Match</button>
+        <button id="rejectBtn" disabled>Reject Match</button>
+        <button id="exitBtn" disabled>Exit</button>
     </div>
+    <div id="timer" style="font-weight: bold; color: darkred; margin-top: 10px;"></div>
+
 
     <h3>Status:</h3>
     <pre id="status"></pre>
 
     <script>
         let socket;
+        let countdownInterval;
+        let countdownSeconds;
 
         document.getElementById('connectBtn').onclick = () => {
             const id = document.getElementById('playerId').value;
@@ -36,6 +42,8 @@
 
             socket.onopen = () => {
                 log(`Connected as ${name}`);
+                document.getElementById('exitBtn').disabled = false;
+                document.getElementById('connectBtn').disabled = true;
             };
 
             socket.onmessage = (msg) => {
@@ -44,16 +52,26 @@
                 const data = JSON.parse(msg.data);
                 if (data.type === 'confirm_match') {
                     document.getElementById('confirmBtn').disabled = false;
+                    document.getElementById('rejectBtn').disabled = false;
+                    log('Match found! Confirm or reject match with opponent');
+                    startCountdown(data.timeLeft);
                 } else if (data.type === 'match_timeout') {
                     document.getElementById('confirmBtn').disabled = true;
                     log('Match canceled. Waiting for a new opponent...');
                 } else if (data.type === 'match_found') {
                     log(`Match confirmed`);
+                    disableMatchButtons();
                 } else if (data.type === 'waiting') {
                     log('Waiting for an opponent...');
+                } else if (data.type === 'opponent_rejected'){
+                    log('The opponent rejected the match. Searching for a new opponent...');
+                    requestWaiting();
+                } else if (data.type === 'opponent_left') {
+                    log('The opponent disconnected. Searching for a new opponent');
+                    requestWaiting();
                 } else {
-                    log(`Unknown data type ${data.type}`);
-                }
+                        log(`Unknown data type ${data.type}`);
+                    }
             };
 
             socket.onerror = (err) => {
@@ -62,7 +80,7 @@
 
             socket.onclose = () => {
                 log('Disconnected.');
-                document.getElementById('confirmBtn').disabled = true;
+                disableAllButtons();
             };
         };
 
@@ -70,7 +88,22 @@
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'confirm_match' }));
                 log('Sent confirm_match');
-                document.getElementById('confirmBtn').disabled = true;
+                disableMatchButtons();
+            }
+        };
+
+        document.getElementById('rejectBtn').onclick = () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({type: 'reject_match'}))
+                log('Sent reject_match');
+                disableMatchButtons();
+            }
+        };
+
+        document.getElementById('exitBtn').onclick = () => {
+            if (socket) {
+                socket.close();
+                log('Disconnected manually');
             }
         };
 
@@ -79,6 +112,48 @@
             status.textContent += message + "\n";
             status.scrollTop = status.scrollHeight;
         }
+
+        function disableMatchButtons() {
+            document.getElementById('confirmBtn').disabled = true;
+            document.getElementById('rejectBtn').disabled = true;
+            clearInterval(countdownInterval);
+            document.getElementById('timer').textContent = '';
+        }
+
+        function disableAllButtons() {
+            document.getElementById('confirmBtn').disabled = true;
+            document.getElementById('rejectBtn').disabled = true;
+            document.getElementById('exitBtn').disabled = true;
+            clearInterval(countdownInterval);
+            document.getElementById('timer').textContent = ''; 
+        }
+        
+        function requestWaiting() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                log('Waiting for a new match...');
+            } else {
+                log ('Socket is not open. Cannot request waiting')
+            }
+            disableMatchButtons();
+        }
+
+        function startCountdown(seconds) {
+            clearInterval(countdownInterval);
+            const timerDisplay = document.getElementById('timer');
+
+            timerDisplay.textContent = `Time left to confirm: ${seconds} seconds`;
+
+            countdownInterval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    timerDisplay.textContent = '';
+                    return;
+                }
+                timerDisplay.textContent = `Time left to confirm: ${seconds} seconds`;
+            }, 1000);
+        }
+
     </script>
 </body>
 </html>

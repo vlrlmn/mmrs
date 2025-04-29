@@ -10,7 +10,7 @@ export interface Player {
     joinedAt: number
 }
 
-interface PendingMatch {
+export interface PendingMatch {
     player1: Player
     player2: Player
     confirmations: { [id: string]: boolean}
@@ -22,7 +22,7 @@ export class MatchmakingService implements IMatchmaking {
 
     private queue: Player[] = []
     private pendingMatches: PendingMatch[] = []
-    private confirmationTimeout = 10000;
+    private confirmationTimeout = 18000;
 
     private getDynamicWindow(player: Player): number {
         const elapsed = Date.now() - player.joinedAt
@@ -60,8 +60,19 @@ export class MatchmakingService implements IMatchmaking {
                         createdAt: Date.now()
                     };
                     this.pendingMatches.push(match)
-                    player1.socket.send(JSON.stringify({type: 'confirm_match', opponent: player2.name}))
-                    player2.socket.send(JSON.stringify({type: 'confirm_match', opponent: player1.name}))
+                    const remainingSeconds = Math.floor(this.confirmationTimeout / 1000);
+
+                    player1.socket.send(JSON.stringify({ 
+                        type: 'confirm_match', 
+                        opponent: player2.name,
+                        timeLeft: remainingSeconds
+                    }));
+
+                    player2.socket.send(JSON.stringify({ 
+                        type: 'confirm_match', 
+                        opponent: player1.name,
+                        timeLeft: remainingSeconds
+                    }));
 
                     return
                 }
@@ -109,4 +120,15 @@ export class MatchmakingService implements IMatchmaking {
             return true;
         })
     }
+
+    findPendingMatch(playerId: string): PendingMatch | undefined {
+        return this.pendingMatches.find(
+            match => match.player1.id === playerId || match.player2.id === playerId
+        );
+    }
+
+    removePendingMatch(match: PendingMatch): void {
+        this.pendingMatches = this.pendingMatches.filter(m => m !== match);
+    }
+    
 }
