@@ -47,6 +47,12 @@
                 } else if (data.type === 'match_timeout') {
                     document.getElementById('confirmBtn').disabled = true;
                     log('Match canceled. Waiting for a new opponent...');
+                } else if (data.type === 'match_found') {
+                    log(`Match confirmed`);
+                } else if (data.type === 'waiting') {
+                    log('Waiting for an opponent...');
+                } else {
+                    log(`Unknown data type ${data.type}`);
                 }
             };
 

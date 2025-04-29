@@ -28,7 +28,7 @@ export async function registerWsRoutes(app: FastifyInstance) {
           const success = matchmaker.confirmMatch(id)
 
           if (!success) {
-            console.log(`No pendong match found for ${id} yet`)
+            console.log(`No pending match found for ${id} yet`)
           }
         }
       } catch (error) {
@@ -43,6 +43,7 @@ export async function registerWsRoutes(app: FastifyInstance) {
   })
 
   setInterval(() => {
-    matchmaker.processQueue()
-  }, 1000)
+    matchmaker.processQueue();
+    matchmaker.checkPendingMatches();
+  }, 1000);
 }
