@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { MatchmakingService } from '../../domain/matchmaking/MatchmakingService'
+import { MatchmakingService } from '../../domain/matchmaking/services/MatchmakingService'
 
 const matchmaker = new MatchmakingService()
 

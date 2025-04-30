@@ -1,5 +1,4 @@
-import { Player, PendingMatch } from "./MatchmakingService";
-
+import { Player, PendingMatch } from './types';
 export interface IMatchmaking {
     addPlayer(player: Player): void;
     removePlayer(id: string): void;
