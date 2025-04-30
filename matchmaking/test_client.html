@@ -46,6 +46,7 @@
                 document.getElementById('connectBtn').disabled = true;
             };
 
+            //-------SOCKET ONMESSAGE------//
             socket.onmessage = (msg) => {
                 console.log("Message from server:", msg.data);
 
@@ -73,7 +74,7 @@
                         log(`Unknown data type ${data.type}`);
                     }
             };
-
+            //-------ERROR AND CLOSE------//
             socket.onerror = (err) => {
                 log(`Error: ${err.message}`);
             };
@@ -83,7 +84,8 @@
                 disableAllButtons();
             };
         };
-
+        
+        //-------BUTTONS INTERACTION------//
         document.getElementById('confirmBtn').onclick = () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'confirm_match' }));
@@ -107,12 +109,14 @@
             }
         };
 
+        //----------FUNCTIONS--------//
         function log(message) {
             const status = document.getElementById('status');
             status.textContent += message + "\n";
             status.scrollTop = status.scrollHeight;
         }
 
+        //----------BUTTONS MANAGEMENT(block buttons to prevent multiple click)--------//
         function disableMatchButtons() {
             document.getElementById('confirmBtn').disabled = true;
             document.getElementById('rejectBtn').disabled = true;
@@ -137,6 +141,7 @@
             disableMatchButtons();
         }
 
+        //-----------TIMER OF CONFIRMATION TIMEOUT (15 seconds)---------//
         function startCountdown(seconds) {
             clearInterval(countdownInterval);
             const timerDisplay = document.getElementById('timer');
