@@ -12,3 +12,17 @@ export interface PendingMatch {
     confirmations: { [id: string]: boolean}
     createdAt: number
 }
+
+export type TournamentStage =
+    'registration'
+    | 'semi' 
+    | 'quarter' 
+    | 'final' 
+    | 'complete';
+
+export interface Match {
+    player1: Player;
+    player2: Player;
+    winner?: Player;
+
+}

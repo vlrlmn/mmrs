@@ -11,7 +11,7 @@ import {
 export class MatchmakingService implements IMatchmaking {
     private queue: Player[] = []
     private pendingMatches: PendingMatch[] = []
-    private confirmationTimeout = 15000;
+    private confirmationTimeout = 20000;
 
     addPlayer(player: Player): void {
         this.queue.push(player)
@@ -75,5 +75,4 @@ export class MatchmakingService implements IMatchmaking {
     removePendingMatch(match: PendingMatch): void {
         this.pendingMatches = this.pendingMatches.filter(m => m !== match);
     }
-    
 }
