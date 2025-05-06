@@ -24,5 +24,5 @@ export interface Match {
     player1: Player;
     player2: Player;
     winner?: Player;
-
+    isConfirmed: boolean;
 }
