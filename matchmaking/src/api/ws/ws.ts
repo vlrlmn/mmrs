@@ -9,16 +9,14 @@ const tournament = new TournamentService();
 
 export async function registerWsRoutes(app: FastifyInstance) {
   app.get('/matchmaking', { websocket: true }, matchmakingHandler(matchmaker));
+  app.get('/tournament', {websocket: true}, (socket: any, req: FastifyRequest) => {
+    const {id, name, mmr} = req.query as any;
+    tournamentHandler(socket, req, id, name, mmr, tournament)
+  }); 
+
 
   setInterval(() => {
     matchmaker.processQueue();
     matchmaker.checkPendingMatches();
   }, 1000);
-}
-
-export function registerTournamnetRoute(app: FastifyInstance) {
-  app.get('/tournament', {websocket: true}, (socket: any, req: FastifyRequest) => {
-    const {id, name, mmr} = req.query as any;
-    tournamentHandler(socket, req, id, name, mmr, tournament)
-  }); 
 }

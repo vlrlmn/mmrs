@@ -22,13 +22,18 @@
         <button id="rejectBtn" disabled>Reject Match</button>
         <button id="exitBtn" disabled>Exit</button>
         <hr>
-        <button id="connectBtn">Join Tournament</button>
+        <h2>Tournament</h2>
+        <button id="joinTournamentBtn">Join Tournament</button>
+        <button id="submitResultBtn" disabled>Submit Match Result</button>
     </div>
     <div id="timer" style="font-weight: bold; color: darkred; margin-top: 10px;"></div>
 
-
-    <h3>Status:</h3>
+    <h3>Matchmaking Status:</h3>
     <pre id="status"></pre>
+    
+    <h3>Tournament Status:</h3>
+    <pre id="tournamentStatus"></pre>
+    
 
     <script>
         let socket;
@@ -109,11 +114,17 @@
                 socket.close();
                 log('Disconnected manually');
             }
-        };
+    };
 
-        //----------FUNCTIONS--------//
+        //----------FUNCTION LOGGERS--------//
         function log(message) {
             const status = document.getElementById('status');
+            status.textContent += message + "\n";
+            status.scrollTop = status.scrollHeight;
+        }
+
+        function logTournament(message) {
+            const status = document.getElementById('tournamentStatus');
             status.textContent += message + "\n";
             status.scrollTop = status.scrollHeight;
         }
@@ -160,6 +171,57 @@
                 timerDisplay.textContent = `Time left to confirm: ${seconds} seconds`;
             }, 1000);
         }
+
+
+        let tournamentSocket;
+
+    document.getElementById('joinTournamentBtn').onclick = () => {
+        const id = document.getElementById('playerId').value;
+        const name = document.getElementById('playerName').value;
+        const mmr = document.getElementById('playerMMR').value;
+
+        tournamentSocket = new WebSocket(`wss://localhost:3000/tournament?id=${id}&name=${name}&mmr=${mmr}`);
+
+        tournamentSocket.onopen = () => {
+            logTournament(`[Tournament] Connected as ${name}`);
+        };
+
+        tournamentSocket.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            console.log('[Tournament] Message:', data);
+
+            if (data.type === 'registered') {
+                logTournament(`[Tournament] Registered in tournament. Stage: ${data.stage}`);
+            } else if (data.type === 'next_stage') {
+                logTournament(`[Tournament] Proceeding to next stage: ${data.stage}`);
+                document.getElementById('submitResultBtn').disabled = false;
+            } else if (data.type === 'tournament_winner') {
+                logTournament(`[Tournament] You are the winner: ${data.winner}`);
+                document.getElementById('submitResultBtn').disabled = true;
+            } else if (data.type === 'error') {
+                logTournament(`[Tournament] Error: ${data.message}`);
+            }
+        };
+
+        tournamentSocket.onerror = (err) => {
+            logTournament(`[Tournament] Error: ${err.message}`);
+        };
+
+        tournamentSocket.onclose = () => {
+            logTournament('[Tournament] Disconnected');
+            document.getElementById('submitResultBtn').disabled = true;
+        };
+    };
+
+    document.getElementById('submitResultBtn').onclick = () => {
+        if (tournamentSocket && tournamentSocket.readyState === WebSocket.OPEN) {
+            tournamentSocket.send(JSON.stringify({ type: 'match_result' }));
+            logTournament('[Tournament] Sent match_result');
+            document.getElementById('submitResultBtn').disabled = true;
+        }
+
+        
+    };
 
     </script>
 </body>
