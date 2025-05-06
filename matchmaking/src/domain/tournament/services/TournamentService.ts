@@ -14,7 +14,7 @@ export class TournamentService implements ITournament {
         if (this.stage !== 'registration') return;
 
         this.tournamentPlayers.push(player);
-        if (this.registerPlayers.length === 8) {
+        if (this.tournamentPlayers.length === 8) {
             this.stage = 'quarter';
             this.startNextRound(this.tournamentPlayers);
         }
