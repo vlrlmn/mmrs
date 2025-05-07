@@ -3,13 +3,25 @@ import { Player, TournamentStage, Match } from "../../matchmaking/types";
 
 
 export class TournamentService implements ITournament {
+    handlePlayerConnection(player: Player) {
+      throw new Error('Method not implemented.');
+    }
     private tournamentPlayers: Player[] = []
     private stage: TournamentStage = 'registration';
     private quarterWinners: Player[] = [];
     private semiWinners: Player[] = [];
     private currentMatches: Match[] = [];
     private champion?: Player;
-    
+
+    resetTournament(): void {
+        this.tournamentPlayers = [];
+        this.quarterWinners = [];
+        this.semiWinners = [];
+        this.currentMatches = [];
+        this.stage = 'registration';
+        this.champion = undefined;
+    }
+
     addPlayer(player: Player): void {
         if (this.stage !== 'registration') return;
 
@@ -20,6 +32,10 @@ export class TournamentService implements ITournament {
         }
     }
 
+    getPlayerCount(): number {
+        return this.tournamentPlayers.length;
+    }
+    
     registerPlayers(player: Player): void {
         this.tournamentPlayers.push(player);
     }
@@ -35,9 +51,16 @@ export class TournamentService implements ITournament {
             (m) => m.player1.id === winner.id || m.player2.id === winner.id
         );
 
-        if (match) {
+        if (match && !match.isConfirmed) {
             match.winner = winner;
             match.isConfirmed = true;
+    
+            const loser = match.player1.id === winner.id ? match.player2 : match.player1;
+            if (loser.socket.readyState === 1) {
+                loser.socket.send(JSON.stringify({ type: 'match_lost' }));
+            }
+        } else {
+            return;
         }
 
         const confirmedWinners = this.currentMatches
@@ -45,18 +68,26 @@ export class TournamentService implements ITournament {
         .map((m) => m.winner!)
 
         if (this.stage === 'quarter' && confirmedWinners.length === 4) {
-            this.quarterWinners = confirmedWinners;
             this.stage = 'semi';
-            this.startNextRound(this.quarterWinners);
+            this.startNextRound(confirmedWinners);
         }
         else if (this.stage === 'semi' && confirmedWinners.length === 2) {
-            this.semiWinners = confirmedWinners;
             this.stage = 'final';
-            this.startNextRound(this.semiWinners);
+            this.startNextRound(confirmedWinners);
         }
         else if (this.stage === 'final' && confirmedWinners.length === 1) {
             this.champion = confirmedWinners[0];
             this.stage = 'complete';
+
+            this.champion.socket.send(JSON.stringify({
+                type: 'tournament_winner',
+                winner: this.champion.name
+            }));
+
+            setTimeout(() => {
+                this.resetTournament();
+                console.log("New tournament");
+            }, 3000);
         }
     }
     
@@ -93,4 +124,6 @@ export class TournamentService implements ITournament {
             }
         }
     }
+
+    
 }

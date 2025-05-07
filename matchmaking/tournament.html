@@ -21,6 +21,7 @@
         <button id="joinTournamentBtn">Join Tournament</button>
         <button id="submitResultBtn" disabled>Submit Match</button>
         <button id="exitBtn" disabled>Exit</button>
+        <button id="iWonBtn" disabled>TEMPORARY WINNER</button>
     </div>
     
     <h3>Tournament Status:</h3>
@@ -45,32 +46,42 @@
         tournamentSocket = new WebSocket(`wss://localhost:3000/tournament?id=${id}&name=${name}&mmr=${mmr}`);
 
         tournamentSocket.onopen = () => {
-            logTournament(`[Tournament] Connected as ${name}`);
+            logTournament(`Connected as ${name}`);
         };
 
         tournamentSocket.onmessage = (msg) => {
             const data = JSON.parse(msg.data);
-            console.log('[Tournament] Message:', data);
+            console.log('Message:', data);
 
             if (data.type === 'registered') {
-                logTournament(`[Tournament] Registered in tournament. Stage: ${data.stage}`);
+                logTournament(`Registered in tournament. Stage: ${data.stage}`);
             } else if (data.type === 'next_stage') {
-                logTournament(`[Tournament] Match against: ${data.opponent} | Stage: ${data.stage}`);
+                if (data.opponent) {
+                    logTournament(`[Tournament] Match against: ${data.opponent} | Stage: ${data.stage}`);
+                } else {
+                    logTournament(`[Tournament] Waiting for opponent... | Stage: ${data.stage}`);
+                }
                 document.getElementById('submitResultBtn').disabled = false;
+                document.getElementById('iWonBtn').disabled = false;
             } else if (data.type === 'tournament_winner') {
-                logTournament(`[Tournament] You are the winner: ${data.winner}`);
+                logTournament(`You are the winner: ${data.winner}`);
                 document.getElementById('submitResultBtn').disabled = true;
             } else if (data.type === 'error') {
-                logTournament(`[Tournament] Error: ${data.message}`);
+                logTournament(`Error: ${data.message}`);
+            } else if (data.type === 'match_lost') {
+                logTournament(`You lost this round`);
+                document.getElementById('iWonBtn').disabled = true;
+                document.getElementById('submitResultBtn').disabled = true;
             }
+
         };
 
         tournamentSocket.onerror = (err) => {
-            logTournament(`[Tournament] Error: ${err.message}`);
+            logTournament(`Error: ${err.message}`);
         };
 
         tournamentSocket.onclose = () => {
-            logTournament('[Tournament] Disconnected');
+            logTournament('Disconnected');
             document.getElementById('submitResultBtn').disabled = true;
         };
     };
@@ -78,12 +89,16 @@
     document.getElementById('submitResultBtn').onclick = () => {
         if (tournamentSocket && tournamentSocket.readyState === WebSocket.OPEN) {
             tournamentSocket.send(JSON.stringify({ type: 'match_result' }));
-            logTournament('[Tournament] Sent match_result');
+            logTournament('Sent match_result');
             document.getElementById('submitResultBtn').disabled = true;
         }
-
-        
     };
+
+    document.getElementById('iWonBtn').onclick = () => {
+        tournamentSocket.send(JSON.stringify({type: 'match_result'}));
+        logTournament('You won the tornament');
+        document.getElementById('iWonBtn').disabled = true;
+    }
 
     </script>
 </body>
