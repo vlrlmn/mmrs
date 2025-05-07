@@ -72,5 +72,25 @@ export class TournamentService implements ITournament {
             };
             this.currentMatches.push(match);
         }
+
+        for (const match of this.currentMatches) {
+            const {player1, player2} = match;
+
+            if (player1.socket.readyState === 1) {
+                player1.socket.send(JSON.stringify({
+                    type: 'next_stage',
+                    stage: this.stage,
+                    opponent: player2.name,
+                }));
+            }
+
+            if (player2.socket.readyState === 1){
+                player2.socket.send(JSON.stringify({
+                    type: 'next_stage',
+                    stage: this.stage,
+                    opponent: player1.name,
+                }))
+            }
+        }
     }
 }

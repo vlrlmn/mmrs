@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tournament Test Client</title>
+</head>
+<body>
+    <h1>Tournament Test Client</h1>
+
+    <div>
+        <label for="playerId">Player ID:</label>
+        <input type="text" id="playerId" value="1">
+        <br>
+        <label for="playerName">Player Name:</label>
+        <input type="text" id="playerName" value="Alice">
+        <br>
+        <label for="playerMMR">Player MMR:</label>
+        <input type="number" id="playerMMR" value="1000">
+        <br><br>
+        <hr>
+        <button id="joinTournamentBtn">Join Tournament</button>
+        <button id="submitResultBtn" disabled>Submit Match</button>
+        <button id="exitBtn" disabled>Exit</button>
+    </div>
+    
+    <h3>Tournament Status:</h3>
+    <pre id="tournamentStatus"></pre>
+
+    <script>
+
+        //----------FUNCTION LOGGERS--------//
+        function logTournament(message) {
+            const status = document.getElementById('tournamentStatus');
+            status.textContent += message + "\n";
+            status.scrollTop = status.scrollHeight;
+        }
+
+        let tournamentSocket;
+
+        document.getElementById('joinTournamentBtn').onclick = () => {
+        const id = document.getElementById('playerId').value;
+        const name = document.getElementById('playerName').value;
+        const mmr = document.getElementById('playerMMR').value;
+
+        tournamentSocket = new WebSocket(`wss://localhost:3000/tournament?id=${id}&name=${name}&mmr=${mmr}`);
+
+        tournamentSocket.onopen = () => {
+            logTournament(`[Tournament] Connected as ${name}`);
+        };
+
+        tournamentSocket.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            console.log('[Tournament] Message:', data);
+
+            if (data.type === 'registered') {
+                logTournament(`[Tournament] Registered in tournament. Stage: ${data.stage}`);
+            } else if (data.type === 'next_stage') {
+                logTournament(`[Tournament] Match against: ${data.opponent} | Stage: ${data.stage}`);
+                document.getElementById('submitResultBtn').disabled = false;
+            } else if (data.type === 'tournament_winner') {
+                logTournament(`[Tournament] You are the winner: ${data.winner}`);
+                document.getElementById('submitResultBtn').disabled = true;
+            } else if (data.type === 'error') {
+                logTournament(`[Tournament] Error: ${data.message}`);
+            }
+        };
+
+        tournamentSocket.onerror = (err) => {
+            logTournament(`[Tournament] Error: ${err.message}`);
+        };
+
+        tournamentSocket.onclose = () => {
+            logTournament('[Tournament] Disconnected');
+            document.getElementById('submitResultBtn').disabled = true;
+        };
+    };
+
+    document.getElementById('submitResultBtn').onclick = () => {
+        if (tournamentSocket && tournamentSocket.readyState === WebSocket.OPEN) {
+            tournamentSocket.send(JSON.stringify({ type: 'match_result' }));
+            logTournament('[Tournament] Sent match_result');
+            document.getElementById('submitResultBtn').disabled = true;
+        }
+
+        
+    };
+
+    </script>
+</body>
+</html>
