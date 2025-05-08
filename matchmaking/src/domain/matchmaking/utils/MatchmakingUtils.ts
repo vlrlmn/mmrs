@@ -41,7 +41,6 @@ export function evaluateMatchTimeout(
         const p1Confirmed = match.confirmations[match.player1.id];
         const p2Confirmed = match.confirmations[match.player2.id];
 
-
         if (match.player1.socket.readyState === 1) {
           match.player1.socket.send(JSON.stringify({ type: 'match_timeout' }));
         }
@@ -49,8 +48,9 @@ export function evaluateMatchTimeout(
           match.player2.socket.send(JSON.stringify({ type: 'match_timeout' }));
         }
     
-        if (p1Confirmed) requeue(match.player1);
-        if (p2Confirmed) requeue(match.player2);
+        const nowTime = Date.now();
+        if (p1Confirmed) { match.player1.joinedAt = nowTime; requeue(match.player1); }
+        if (p2Confirmed) { match.player2.joinedAt = nowTime; requeue(match.player2); }
     
         return false;
     }
