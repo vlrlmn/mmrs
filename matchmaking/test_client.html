@@ -22,17 +22,13 @@
         <button id="rejectBtn" disabled>Reject Match</button>
         <button id="exitBtn" disabled>Exit</button>
         <hr>
-        <h2>Tournament</h2>
-        <button id="joinTournamentBtn">Join Tournament</button>
-        <button id="submitResultBtn" disabled>Submit Match Result</button>
+
     </div>
     <div id="timer" style="font-weight: bold; color: darkred; margin-top: 10px;"></div>
 
     <h3>Matchmaking Status:</h3>
     <pre id="status"></pre>
     
-    <h3>Tournament Status:</h3>
-    <pre id="tournamentStatus"></pre>
     
 
     <script>
@@ -75,11 +71,14 @@
                     log('The opponent rejected the match. Searching for a new opponent...');
                     requestWaiting();
                 } else if (data.type === 'opponent_left') {
-                    log('The opponent disconnected. Searching for a new opponent');
+                    log(data.message);
                     requestWaiting();
+                } else if (data.type === 'victory_by_default') {
+                    log(data.message);
+                    disableMatchButtons();
                 } else {
-                        log(`Unknown data type ${data.type}`);
-                    }
+                    log(`Unknown data type ${data.type}`);
+                }
             };
             //-------ERROR AND CLOSE------//
             socket.onerror = (err) => {

@@ -7,6 +7,7 @@ export interface Player {
 }
 
 export interface PendingMatch {
+    isActive: boolean
     player1: Player
     player2: Player
     confirmations: { [id: string]: boolean}

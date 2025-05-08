@@ -16,7 +16,8 @@ export function createMatch(player1: Player, player2: Player, timeoutMs: number)
     player1.socket.send(JSON.stringify({ type: 'confirm_match', opponent: player2.name, timeLeft }));
     player2.socket.send(JSON.stringify({ type: 'confirm_match', opponent: player1.name, timeLeft }));
 
-    return { 
+    return {
+        isActive: false,
         player1, 
         player2,
         confirmations: {
@@ -27,8 +28,20 @@ export function createMatch(player1: Player, player2: Player, timeoutMs: number)
     };
 }
 
-export function evaluateMatchTimeout(match: PendingMatch, now: number, timeout: number, requeue: (p: Player) => void): boolean {
-    if (now - match.createdAt > timeout) {
+export function evaluateMatchTimeout(
+        match: PendingMatch, 
+        now: number, 
+        timeout: number, 
+        requeue: (p: Player) => void
+    ): boolean {
+
+    const expired = now - match.createdAt > timeout;
+    if (expired) {
+
+        const p1Confirmed = match.confirmations[match.player1.id];
+        const p2Confirmed = match.confirmations[match.player2.id];
+
+
         if (match.player1.socket.readyState === 1) {
           match.player1.socket.send(JSON.stringify({ type: 'match_timeout' }));
         }
@@ -36,8 +49,8 @@ export function evaluateMatchTimeout(match: PendingMatch, now: number, timeout: 
           match.player2.socket.send(JSON.stringify({ type: 'match_timeout' }));
         }
     
-        if (!match.confirmations[match.player1.id]) requeue(match.player1);
-        if (!match.confirmations[match.player2.id]) requeue(match.player2);
+        if (p1Confirmed) requeue(match.player1);
+        if (p2Confirmed) requeue(match.player2);
     
         return false;
     }

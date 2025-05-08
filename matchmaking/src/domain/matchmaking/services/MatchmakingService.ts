@@ -12,6 +12,7 @@ export class MatchmakingService implements IMatchmaking {
     private queue: Player[] = []
     private pendingMatches: PendingMatch[] = []
     private confirmationTimeout = 20000;
+    private activeMatches: Map<string, PendingMatch> = new Map();
 
     addPlayer(player: Player): void {
         this.queue.push(player)
@@ -19,6 +20,19 @@ export class MatchmakingService implements IMatchmaking {
 
     removePlayer(id: string): void {
        this.queue = this.queue.filter(p => p.id !== id)
+       this.activeMatches.delete(id);
+    }
+
+    getActiveMatchOf(id: string): PendingMatch | undefined {
+        return this.activeMatches.get(id);
+    }
+
+    removeActiveMatchPlayer(id: string): void {
+        const match = this.activeMatches.get(id);
+        if (match) {
+            this.activeMatches.delete(match.player1.id);
+            this.activeMatches.delete(match.player2.id);
+        }
     }
 
     processQueue(): void {
@@ -46,10 +60,14 @@ export class MatchmakingService implements IMatchmaking {
             if (match.confirmations.hasOwnProperty(playerId)) {
                 match.confirmations[playerId] = true;
 
-                if (match.confirmations[match.player1.id] && match.confirmations[match.player2.id]) {
+                const allConfirmed = match.confirmations[match.player1.id] && match.confirmations[match.player2.id];
+                if (allConfirmed) {
+                    match.isActive = true;
+                    this.pendingMatches = this.pendingMatches.filter(m => m !== match);
+                    this.activeMatches.set(match.player1.id, match);
+                    this.activeMatches.set(match.player2.id, match);
                     match.player1.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
                     match.player2.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
-                    this.pendingMatches = this.pendingMatches.filter(m => m !== match);
 
                     return true;
                 }
@@ -60,9 +78,14 @@ export class MatchmakingService implements IMatchmaking {
 
     checkPendingMatches(): void {
         const now = Date.now();
-        this.pendingMatches = this.pendingMatches.filter(
-            match => evaluateMatchTimeout(match, now, this.confirmationTimeout, this.addPlayer.bind(this))
-        );
+        this.pendingMatches = this.pendingMatches.filter( match => {
+            const keep = evaluateMatchTimeout(match, now, this.confirmationTimeout, this.addPlayer.bind(this));
+            if (!keep) {
+                this.activeMatches.delete(match.player1.id);
+                this.activeMatches.delete(match.player2.id);
+            }
+            return keep;
+        });
     }
 
 
