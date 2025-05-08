@@ -3,33 +3,32 @@ import { Player, TournamentStage, Match } from "../../matchmaking/types";
 
 
 export class TournamentService implements ITournament {
-    handlePlayerConnection(player: Player) {
-      throw new Error('Method not implemented.');
-    }
     private tournamentPlayers: Player[] = []
     private stage: TournamentStage = 'registration';
-    private quarterWinners: Player[] = [];
-    private semiWinners: Player[] = [];
     private currentMatches: Match[] = [];
     private champion?: Player;
+    private readonly onComplete?: () => void;
+
+    constructor(onComplete?: () => void) {
+        this.onComplete = onComplete;
+    }
 
     resetTournament(): void {
         this.tournamentPlayers = [];
-        this.quarterWinners = [];
-        this.semiWinners = [];
         this.currentMatches = [];
         this.stage = 'registration';
         this.champion = undefined;
     }
 
-    addPlayer(player: Player): void {
-        if (this.stage !== 'registration') return;
+    addPlayer(player: Player): boolean {
+        if (this.stage !== 'registration') return false;
 
         this.tournamentPlayers.push(player);
         if (this.tournamentPlayers.length === 8) {
             this.stage = 'quarter';
             this.startNextRound(this.tournamentPlayers);
         }
+        return true;
     }
 
     getPlayerCount(): number {
@@ -87,6 +86,7 @@ export class TournamentService implements ITournament {
             setTimeout(() => {
                 this.resetTournament();
                 console.log("New tournament");
+                this.onComplete?.();
             }, 3000);
         }
     }
@@ -115,7 +115,7 @@ export class TournamentService implements ITournament {
                 }));
             }
 
-            if (player2.socket.readyState === 1){
+            if (player2.socket.readyState === 1) {
                 player2.socket.send(JSON.stringify({
                     type: 'next_stage',
                     stage: this.stage,

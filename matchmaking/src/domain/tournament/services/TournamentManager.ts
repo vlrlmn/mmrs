@@ -1,20 +1,21 @@
-import { TournamentService } from "./TournamentService";
-import { Player } from "../../matchmaking/types";
+// import { TournamentService } from "./TournamentService";
+// import { Player } from "../../matchmaking/types";
 
-export class TournamentManager {
-    private tournaments: TournamentService[] = [];
+// export class TournamentManager {
+//     private tournaments: TournamentService[] = [];
 
-    addPlayer(player: Player): TournamentService {
+//     addPlayer(player: Player): TournamentService {
 
-        let available = this.tournaments.find(t =>
-            t.getCurrentStage() === 'registration' && t.getPlayerCount() < 8  
-        );
-
-        if (!available) {
-            available = new TournamentService();
-            this.tournaments.push(available);
-        }
-        available.addPlayer(player);
-        return available;
-    }
-}
+//         for (const t of this.tournaments) {
+//             if (t.getCurrentStage() === 'registration' && t.getPlayerCount() < 8) {
+//               const added = t.addPlayer(player);
+//               if (added) return t;
+//             }
+//           }
+        
+//           const newTournament = new TournamentService();
+//           newTournament.addPlayer(player);
+//           this.tournaments.push(newTournament);
+//           return newTournament;
+//     }
+// }

@@ -1,29 +1,44 @@
-import { FastifyInstance, FastifyRegister, FastifyRequest} from 'fastify'
-import { MatchmakingService } from '../../domain/matchmaking/services/MatchmakingService'
-import { tournamentHandler } from './ws_routes/tournamentRoute'
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { MatchmakingService } from '../../domain/matchmaking/services/MatchmakingService';
 import { TournamentService } from '../../domain/tournament/services/TournamentService';
+import { tournamentHandler } from './ws_routes/tournamentRoute';
 import { matchmakingHandler } from './ws_routes/matchmakingRoute';
-import { TournamentManager } from '../../domain/tournament/services/TournamentManager';
 import { createPlayer } from './utils/createPlayer';
 
 const matchmaker = new MatchmakingService();
-const tournament = new TournamentService();
-const manager = new TournamentManager();
+const tournaments: Map<string, TournamentService> = new Map();
 
 export async function registerWsRoutes(app: FastifyInstance) {
   app.get('/matchmaking', { websocket: true }, matchmakingHandler(matchmaker));
 
-  app.get('/tournament', {websocket: true}, (socket: any, req: FastifyRequest) => {
-    const {id, name, mmr} = req.query as any;
+  app.get('/tournament', { websocket: true }, (socket: any, req: FastifyRequest) => {
+    const { id, name, mmr, tid } = req.query as any;
+
+    if (!tid) {
+      socket.send(JSON.stringify({ type: 'error', message: 'Tournament ID (tid) is required' }));
+      socket.close();
+      return;
+    }
+
     const player = createPlayer(id, name, parseInt(mmr), socket);
 
-    const tournament = manager.addPlayer(player);
-    tournamentHandler(socket, req, id, name, mmr, tournament)
-  });
+    let tournament = tournaments.get(tid);
+    if (!tournament) {
+      tournament = new TournamentService(() => {
+        tournaments.delete(tid);
+        console.log(`Tournament ${tid} removed`);
+      });
+      tournaments.set(tid, tournament);
+    }
+    
+    const added = tournament.addPlayer(player);
+    if (!added) {
+      socket.send(JSON.stringify({ type: 'error', message: 'Tournament already in progress' }));
+      socket.close();
+      return;
+    }
 
-  app.post('/reset-tournament', async (req, res) => {
-    tournament.resetTournament();
-    res.send({ message: 'Tournament reset' });
+    tournamentHandler(socket, req, id, name, mmr, tournament);
   });
 
   setInterval(() => {

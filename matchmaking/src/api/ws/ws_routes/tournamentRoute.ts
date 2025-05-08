@@ -13,7 +13,6 @@ export function tournamentHandler(
 ) {
     const player: Player = createPlayer(id, name, parseInt(mmr), socket);
     console.log(`${name} (${id}) joined tournament`);
-    tournament.addPlayer(player);
     socket.send(JSON.stringify({type: 'registered', stage: tournament.getCurrentStage()}));
 
     socket.on('message', (raw: string) => {
