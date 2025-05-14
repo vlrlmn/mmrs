@@ -1,6 +1,10 @@
 import { ITournament } from "../ITournament";
 import { Player, TournamentStage, Match } from "../../matchmaking/types";
-
+import {
+    findMatchForWinner,
+    confirmWinner,
+    getConfirmedWinners
+} from "../utils/TournamentUtils"
 
 export class TournamentService implements ITournament {
     private tournamentPlayers: Player[] = []
@@ -46,25 +50,10 @@ export class TournamentService implements ITournament {
     confirmMatchResult(winner: Player): void {
         if (!this.currentMatches.length) return;
 
-        const match = this.currentMatches.find(
-            (m) => m.player1.id === winner.id || m.player2.id === winner.id
-        );
-
-        if (match && !match.isConfirmed) {
-            match.winner = winner;
-            match.isConfirmed = true;
-    
-            const loser = match.player1.id === winner.id ? match.player2 : match.player1;
-            if (loser.socket.readyState === 1) {
-                loser.socket.send(JSON.stringify({ type: 'match_lost' }));
-            }
-        } else {
-            return;
-        }
-
-        const confirmedWinners = this.currentMatches
-        .filter((m) => m.isConfirmed && m.winner)
-        .map((m) => m.winner!)
+        const match = findMatchForWinner(this.currentMatches, winner);
+        if (!match || match.isConfirmed) return;
+        confirmWinner(match, winner);
+        const confirmedWinners = getConfirmedWinners(this.currentMatches);
 
         if (this.stage === 'quarter' && confirmedWinners.length === 4) {
             this.stage = 'semi';
@@ -124,6 +113,4 @@ export class TournamentService implements ITournament {
             }
         }
     }
-
-    
 }
