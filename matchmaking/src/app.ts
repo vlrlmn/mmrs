@@ -3,6 +3,7 @@ import websocket from '@fastify/websocket'
 import { registerWsRoutes } from './api/ws/ws'
 import { registerRestRoutes } from './api/rest/rest'
 import { readFileSync } from 'fs'
+import cors from '@fastify/cors'
 
 const options = {
   key: readFileSync('./localhost+2-key.pem'),
@@ -15,6 +16,10 @@ const app = Fastify({
 })
 
 async function main() {
+  await app.register(cors, {
+    origin: ['http://localhost:3000'],
+    credentials: true
+  });
   await app.register(websocket);
 
   await registerRestRoutes(app)

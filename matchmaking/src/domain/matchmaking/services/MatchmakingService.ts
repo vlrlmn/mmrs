@@ -45,7 +45,7 @@ export class MatchmakingService implements IMatchmaking {
             for (let j = i + 1; j < this.queue.length; j++) {
                 const player2 = this.queue[j]
                 
-                if (isWithinMatchWindow(player1, player2, window)) {
+                if (player1.id !== player2.id && isWithinMatchWindow(player1, player2, window)) {
                     this.queue = this.queue.filter(p => p.id !== player1.id && player1.id !== player2.id);
                     const match = createMatch(player1, player2, this.confirmationTimeout);
                     this.pendingMatches.push(match);
