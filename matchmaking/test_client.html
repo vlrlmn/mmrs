@@ -43,7 +43,7 @@
             const name = document.getElementById('playerName').value;
             const mmr = document.getElementById('playerMMR').value;
 
-            socket = new WebSocket(`wss://localhost:3000/matchmaking?id=${id}&name=${name}&mmr=${mmr}`);
+            socket = new WebSocket(`ws://localhost:3000/matchmaking?id=${id}&name=${name}&mmr=${mmr}`);
 
             socket.onopen = () => {
                 log(`Connected as ${name}`);

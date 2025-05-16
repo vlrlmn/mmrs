@@ -2,30 +2,32 @@ import Fastify from 'fastify'
 import websocket from '@fastify/websocket'
 import { registerWsRoutes } from './api/ws/ws'
 import { registerRestRoutes } from './api/rest/rest'
-import { readFileSync } from 'fs'
+// import { readFileSync } from 'fs'
 import cors from '@fastify/cors'
+import { Config } from './config/Config'
 
-const options = {
-  key: readFileSync('./localhost+2-key.pem'),
-  cert: readFileSync('./localhost+2.pem'),
-}
+// const options = {
+//   key: readFileSync('./localhost+2-key.pem'),
+//   cert: readFileSync('./localhost+2.pem'),
+// }
 
 const app = Fastify({
   logger: true,
-  https: options
+  // https: options
 })
 
 async function main() {
   await app.register(cors, {
-    origin: ['http://localhost:3000'],
+    origin: [Config.ALLOWED_ORIGIN],
     credentials: true
   });
+
   await app.register(websocket);
 
   await registerRestRoutes(app)
   await registerWsRoutes(app)
 
-  app.listen({ port: 3000 }, (err, address) => {
+  app.listen({ port: Config.PORT }, (err, address) => {
     if (err) {
       app.log.error(err)
       process.exit(1)
