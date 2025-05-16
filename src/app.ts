@@ -4,7 +4,7 @@ import { registerWsRoutes } from './api/ws/ws'
 import { registerRestRoutes } from './api/rest/rest'
 
 import cors from '@fastify/cors'
-import { Config } from './config/Config'
+import Config from './config/Config'
 
 
 const app = Fastify({
@@ -13,7 +13,7 @@ const app = Fastify({
 
 async function main() {
   await app.register(cors, {
-    origin: [Config.ALLOWED_ORIGIN],
+    origin: [Config.getInstance().getAllowedOrigin()],
     credentials: true
   });
 
@@ -22,7 +22,7 @@ async function main() {
   await registerRestRoutes(app)
   await registerWsRoutes(app)
 
-  app.listen({ port: Config.PORT }, (err, address) => {
+  app.listen({ port: Config.getInstance().getPort() }, (err, address) => {
     if (err) {
       app.log.error(err)
       process.exit(1)
