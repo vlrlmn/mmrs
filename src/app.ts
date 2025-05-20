@@ -2,10 +2,10 @@ import Fastify from 'fastify'
 import websocket from '@fastify/websocket'
 import { registerWsRoutes } from './api/ws/ws'
 import { registerRestRoutes } from './api/rest/rest'
-
 import cors from '@fastify/cors'
 import Config from './config/Config'
-
+import fp from 'fastify-plugin'
+import { Storage } from './db/Storage'
 
 const app = Fastify({
   logger: true,
@@ -19,6 +19,17 @@ async function main() {
 
   await app.register(websocket);
 
+  const storagePlugin = fp(async (app) => {
+    const storage = new Storage();
+    app.decorate('storage', storage);
+
+    app.addHook('onClose', (app, done) => {
+      storage.close();
+      done();
+    });
+  });
+
+  await app.register(storagePlugin);
   await registerRestRoutes(app)
   await registerWsRoutes(app)
 

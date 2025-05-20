@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS participant (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  rating_change INTEGER,
+  FOREIGN KEY (match_id) REFERENCES match(id)
+);

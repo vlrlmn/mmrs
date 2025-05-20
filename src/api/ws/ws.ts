@@ -5,10 +5,11 @@ import { tournamentHandler } from './ws_routes/tournamentRoute';
 import { matchmakingHandler } from './ws_routes/matchmakingRoute';
 import { createPlayer } from './utils/createPlayer';
 
-const matchmaker = new MatchmakingService();
-const tournaments: Map<string, TournamentService> = new Map();
 
 export async function registerWsRoutes(app: FastifyInstance) {
+  const matchmaker = new MatchmakingService(app.storage);
+  const tournaments: Map<string, TournamentService> = new Map();
+
   app.get('/matchmaking', { websocket: true }, matchmakingHandler(matchmaker));
 
   app.get('/tournament', { websocket: true }, (socket: any, req: FastifyRequest) => {

@@ -1,6 +1,7 @@
 import { WebsocketHandler } from "@fastify/websocket";
 import { IMatchmaking } from "../IMatchmaking";
 import { Player, PendingMatch } from '../types';
+import { IStorage } from '../../../db/IStorage';
 import {
     getDynamicWindow,
     isWithinMatchWindow,
@@ -13,6 +14,10 @@ export class MatchmakingService implements IMatchmaking {
     private pendingMatches: PendingMatch[] = []
     private confirmationTimeout = 20000;
     private activeMatches: Map<string, PendingMatch> = new Map();
+
+    constructor (private readonly storage: IStorage) {
+        
+    }
 
     addPlayer(player: Player): void {
         this.queue.push(player)
@@ -66,6 +71,11 @@ export class MatchmakingService implements IMatchmaking {
                     this.pendingMatches = this.pendingMatches.filter(m => m !== match);
                     this.activeMatches.set(match.player1.id, match);
                     this.activeMatches.set(match.player2.id, match);
+                    const matchId = this.storage.addMatch(1, [
+                        parseInt(match.player1.id),
+                        parseInt(match.player2.id)
+                    ]);
+                    console.log("Match saved in database with id: ", matchId);
                     match.player1.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
                     match.player2.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
 
