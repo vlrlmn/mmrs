@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import RadishClient from "../client/client"
 import Config from "../../config/Config"
 import { JwtGeneratorConfig } from "./JwtGeneratorConfig"
-import { JwtSignError, JwtCachError, JwtTokenVerificationError } from './jwtErrors';
+import { JwtSignError, JwtCachError, JwtTokenVerificationError, JwtExtractionError } from './jwtErrors';
 
 function setUpJwtGenerator(): void {
 	JwtGenerator.getInstance();
@@ -21,7 +21,12 @@ interface TokenPair {
 
 export enum TokenType {
 	Access = 'access',
-	Refresh = 'refresh',
+	Refresh = 'refresh'
+}
+
+export enum TokensToDelete {
+	All = 0,
+	RefreshOnly = 1
 }
 
 class JwtGenerator {
@@ -79,10 +84,45 @@ class JwtGenerator {
 			throw JwtTokenVerificationError;
 		}
 	}
+
+	public async deleteToken(token: string) {
+		const status = await this.radishClient.delete(token);
+		if (status.status != 200) {
+			throw JwtCachError;
+		}
+	}
 };
 
-//return undefined if error was caught, in handler reply 401
-async function isTokenValid(request: FastifyRequest, type: TokenType = TokenType.Access): Promise<JwtPayload | undefined>
+async function deleteJwtToken(request: FastifyRequest, type: TokenType): Promise<boolean> {
+	const token = await getTokenFromRequest(request, type);
+	if (!token) {
+		console.log(`${type} token extraction from request failed`);
+		return false;
+	}
+	try {
+		const insatnce = JwtGenerator.getInstance();
+		insatnce.deleteToken(`${type}-${token}`);
+	} catch (err: any) {
+		console.log(err);
+		return false;
+	}
+	return true;
+}
+
+async function deleteJwtTokenPair(request: FastifyRequest, tokens: TokensToDelete = TokensToDelete.All): Promise<boolean> {
+
+	if (!deleteJwtToken(request, TokenType.Refresh))
+		return false;
+
+	if (tokens === TokensToDelete.All)
+	{
+		if (!deleteJwtToken(request, TokenType.Access))
+			return false;
+	}
+	return true;
+}
+
+async function getTokenFromRequest(request: FastifyRequest, type: TokenType): Promise<string | undefined>
 {
 	let token: string;
 	if (type === TokenType.Access) {
@@ -91,8 +131,21 @@ async function isTokenValid(request: FastifyRequest, type: TokenType = TokenType
 		const body = request.body as { refreshToken: string };
 		token = body.refreshToken;
 	}
+	return token;
+}
+
+//return undefined if error was caught, in handler reply 401
+async function isTokenValid(request: FastifyRequest | string, type: TokenType = TokenType.Access): Promise<JwtPayload | undefined>
+{
+	let token: string | undefined
+	if (typeof request === 'string') {
+		token = request
+	} else {
+		token = await getTokenFromRequest(request, type);
+	}
+
 	if (!token) {
-		console.log(`${type} token excraction failed`);
+		console.log(`${type} token extraction from request failed`);
 		return undefined;
 	}
 	try {
@@ -117,5 +170,7 @@ async function generateJwtTokenPair(payload: JwtPayload): Promise<TokenPair | un
 export {
 	isTokenValid,
 	generateJwtTokenPair,
-	setUpJwtGenerator
+	getTokenFromRequest,
+	setUpJwtGenerator,
+	deleteJwtTokenPair
 }

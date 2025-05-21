@@ -11,11 +11,13 @@ class JwtError extends Error {
 const JwtGeneratorConfigError = new JwtError("JwtGeneratorConfigError", "invalid argumnets");
 const JwtSignError = new JwtError("JwtSignError", "token signing failed");
 const JwtCachError = new JwtError("JwtCachError", "token caching failed");
+const JwtExtractionError = new JwtError("JwtExtractionError", "token extraction from request failed");
 const JwtTokenVerificationError = new JwtError("JwtTokenVerificationError", "token is not verified");
 
 export {
     JwtGeneratorConfigError,
     JwtSignError,
     JwtCachError,
-    JwtTokenVerificationError
+    JwtTokenVerificationError,
+    JwtExtractionError
 }
