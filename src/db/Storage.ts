@@ -4,13 +4,17 @@ import IStorage from './IStorage';
 import { syncMigrations } from './migrate'
 
 export class Storage implements IStorage {
+
+    async testRequestToDB(): Promise<string> {
+        return 'connected to database';
+    }
     private db: Database.Database;
 
     constructor () {
-        const dbPath = path.resolve(__dirname, '../../db/database.db');
+        const dbPath = path.resolve(__dirname, 'database.db');
         this.db = new Database(dbPath);
 
-        const migrationsDir = path.resolve(__dirname, '../../db/migrations');
+        const migrationsDir = path.resolve(__dirname, 'migrations');
         syncMigrations(this.db, migrationsDir);
     }
 

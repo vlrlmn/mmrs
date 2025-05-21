@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { Storage } from '../../../infrastructure/storage/storage'
+import { Storage } from '../../../db/Storage'
 
 export async function pingHandler(request: FastifyRequest, reply: FastifyReply) {
   const storage = new Storage()

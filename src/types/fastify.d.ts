@@ -1,8 +1,13 @@
 import 'fastify';
-import Storage from '../storage/IStorage';
+import { IStorage } from '../db/IStorage';
 
 declare module 'fastify' {
   interface FastifyInstance {
-    storage: Storage;
+    storage: IStorage;
+  }
+
+    interface FastifyRequest {
+    server: FastifyInstance;
   }
 }
+ 

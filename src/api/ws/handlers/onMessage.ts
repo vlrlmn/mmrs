@@ -4,7 +4,7 @@ export function handleMessage(socket: any, id: string, name: string, matchmaker:
   return (rawMessage: string) => {
     try {
       const message = JSON.parse(rawMessage);
-      if (message.type === 'join') // in body of request to send token
+      // if (message.type === 'join') // in body of request to send token
       if (message.type === 'confirm_match') {
         console.log(`${name} (${id}) confirmed the match`);
         const success = matchmaker.confirmMatch(id);
