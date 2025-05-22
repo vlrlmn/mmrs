@@ -1,43 +1,37 @@
-import { FastifyRequest } from "fastify";
-import { TournamentService } from "../../../domain/tournament/services/TournamentService";
-import { createPlayer } from "../utils/createPlayer";
-import { Player } from "../../../domain/matchmaking/types";
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { TournamentService } from '../../../domain/tournament/services/TournamentService';
+import { createPlayer } from '../utils/createPlayer';
+import { tournamentHandler } from '../handlers/tournamentHandler';
 
-export function tournamentHandler(
-    socket: any,
-    req: FastifyRequest,
-    id: string,
-    name: string, 
-    mmr: string,
-    tournament: TournamentService
-) {
-    const player: Player = createPlayer(id, name, parseInt(mmr), socket);
-    console.log(`${name} (${id}) joined tournament`);
-    socket.send(JSON.stringify({type: 'registered', stage: tournament.getCurrentStage()}));
+const tournaments: Map<string, TournamentService> = new Map();
 
-    socket.on('message', (raw: string) => {
-        try {
-            const message = JSON.parse(raw);
+export async function registerTournamentRoute(app: FastifyInstance) {
+  app.get('/tournament', { websocket: true }, (socket: any, req: FastifyRequest) => {
+    const { id, name, mmr, tid } = req.query as any;
 
-            if (message.type === 'match_result') {
-                console.log(`${name} (${id}) confirmed match`);
-                tournament.confirmMatchResult(player);
+    if (!tid) {
+      socket.send(JSON.stringify({ type: 'error', message: 'Tournament ID (tid) is required' }));
+      socket.close();
+      return;
+    }
 
-                const stage = tournament.getCurrentStage();
+    const player = createPlayer(id, parseInt(mmr), socket);
 
-                if(stage === 'complete') {
-                    socket.send(JSON.stringify({type: 'tournament_winner', winner: player.name}));
-                } else {
-                    socket.send(JSON.stringify({type: 'next_stage', stage}));
-                }
-            }
-        } catch (e) {
-            console.error ('Invalid tournament message: ', e);
-            socket.send(JSON.stringify({type: 'error', message: 'Invalid message'}));
-        }
-    });
+    let tournament = tournaments.get(tid);
+    if (!tournament) {
+      tournament = new TournamentService(() => {
+        tournaments.delete(tid);
+        console.log(`Tournament ${tid} removed`);
+      });
+      tournaments.set(tid, tournament);
+    }
 
-    socket.on('close', () => {
-        console.log(`${name} (${id}) disconnected from tournament`);
-    })
+    const added = tournament.addPlayer(player);
+    if (!added) {
+      socket.send(JSON.stringify({ type: 'error', message: 'Tournament already in progress' }));
+      socket.close();
+      return;
+    }
+    tournamentHandler(socket, req, id, mmr, tournament);
+  });
 }

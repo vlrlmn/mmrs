@@ -76,8 +76,8 @@ export class MatchmakingService implements IMatchmaking {
                         parseInt(match.player2.id)
                     ]);
                     console.log("Match saved in database with id: ", matchId);
-                    match.player1.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
-                    match.player2.socket.send(JSON.stringify({type: 'match_found', opponent: match.player2.name}));
+                    match.player1.socket.send(JSON.stringify({type: 'match_ready'}));
+                    match.player2.socket.send(JSON.stringify({type: 'match_ready'}));
 
                     return true;
                 }

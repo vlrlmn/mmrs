@@ -68,16 +68,14 @@ export function createNextRoundMatches(players: Player[], stage: TournamentStage
         if (player1.socket.readyState === 1) {
             player1.socket.send(JSON.stringify({
                 type: 'next_stage',
-                stage,
-                opponent: player2.name,
+                stage
             }));
         }
 
         if (player2.socket.readyState === 1) {
             player2.socket.send(JSON.stringify({
                 type: 'next_stage',
-                stage,
-                opponent: player1.name,
+                stage
             }));
         }
     }

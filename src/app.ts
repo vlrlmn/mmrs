@@ -6,7 +6,6 @@ import cors from '@fastify/cors'
 import Config from './config/Config'
 import fp from 'fastify-plugin'
 import { Storage } from './db/Storage'
-// import './types/fastify'
 
 const app = Fastify({
   logger: true,

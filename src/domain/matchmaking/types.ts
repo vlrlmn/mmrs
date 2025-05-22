@@ -1,6 +1,5 @@
 export interface Player {
     id: string
-    name: string
     mmr: number
     socket: any
     joinedAt: number

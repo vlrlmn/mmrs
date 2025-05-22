@@ -56,7 +56,7 @@
                 console.log("Message from server:", msg.data);
 
                 const data = JSON.parse(msg.data);
-                if (data.type === 'confirm_match') {
+                if (data.type === 'match_found') {
                     currentOpponent = data.opponent || 'Unknown';
                     log(`Match found! Your opponent is ${currentOpponent}. Confirm or reject match.`);
                     startCountdown(data.timeLeft);
@@ -66,11 +66,11 @@
                 } else if (data.type === 'match_timeout') {
                     document.getElementById('confirmBtn').disabled = true;
                     log('Match canceled. Waiting for a new opponent...');
-                } else if (data.type === 'match_found') {
+                } else if (data.type === 'match_ready') {
                     log(`Match confirmed with ${currentOpponent}`);
                     disableMatchButtons();
-                } else if (data.type === 'waiting') {
-                    log('Waiting for an opponent...');
+                } else if (data.type === 'searching') {
+                    log('Searching an opponent...');
                 } else if (data.type === 'opponent_rejected'){
                     log('The opponent rejected the match. Searching for a new opponent...');
                     requestWaiting();
@@ -98,8 +98,8 @@
         //-------BUTTONS INTERACTION------//
         document.getElementById('confirmBtn').onclick = () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'confirm_match' }));
-                log('Sent confirm_match');
+                socket.send(JSON.stringify({ type: 'match_found' }));
+                log('Sent match_found');
                 disableMatchButtons();
             }
         };

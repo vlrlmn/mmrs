@@ -13,12 +13,12 @@ export function createMatch(player1: Player, player2: Player, timeoutMs: number)
     const createdAt = Date.now();
     const timeLeft = Math.floor(timeoutMs / 1000);
 
-    player1.socket.send(JSON.stringify({ type: 'confirm_match', opponent: player2.name, timeLeft }));
-    player2.socket.send(JSON.stringify({ type: 'confirm_match', opponent: player1.name, timeLeft }));
+    player1.socket.send(JSON.stringify({ type: 'match_found', timeLeft }));
+    player2.socket.send(JSON.stringify({ type: 'match_found', timeLeft }));
 
     return {
         isActive: false,
-        player1, 
+        player1,
         player2,
         confirmations: {
             [player1.id]: false,
