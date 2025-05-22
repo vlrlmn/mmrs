@@ -18,6 +18,13 @@ export class Storage implements IStorage {
         syncMigrations(this.db, migrationsDir);
     }
 
+    addParticipant(matchId: number, userId: number): void {
+        const stmt = this.db.prepare(
+            'INSERT INTO participants (match_id, user_id) VALUES (?, ?)'
+        );
+        stmt.run(matchId, userId);
+    }
+
     public addMatch(mode: number, participants: number[]): number {
         const insertMatch = this.db.prepare(`
         INSERT INTO match (mode)

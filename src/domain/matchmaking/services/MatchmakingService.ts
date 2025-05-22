@@ -8,6 +8,7 @@ import {
     createMatch,
     evaluateMatchTimeout
 } from '../utils/MatchmakingUtils';
+import CacheStorage from "../../cache/CacheStorage";
 
 export class MatchmakingService implements IMatchmaking {
     private queue: Player[] = []
@@ -60,7 +61,7 @@ export class MatchmakingService implements IMatchmaking {
         }
     }
 
-    confirmMatch(playerId: string): boolean {
+    async confirmMatch(playerId: string): Promise<boolean> {
         for (const match of this.pendingMatches) {
             if (match.confirmations.hasOwnProperty(playerId)) {
                 match.confirmations[playerId] = true;
@@ -71,10 +72,18 @@ export class MatchmakingService implements IMatchmaking {
                     this.pendingMatches = this.pendingMatches.filter(m => m !== match);
                     this.activeMatches.set(match.player1.id, match);
                     this.activeMatches.set(match.player2.id, match);
+                    
                     const matchId = this.storage.addMatch(1, [
                         parseInt(match.player1.id),
                         parseInt(match.player2.id)
                     ]);
+                    this.storage.addParticipant(matchId, parseInt(match.player1.id));
+                    this.storage.addParticipant(matchId, parseInt(match.player2.id));
+                    
+                    const cache = CacheStorage.getInstance();
+                    await cache.saveUserRating(parseInt(match.player1.id), match.player1.mmr);
+                    await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
+
                     console.log("Match saved in database with id: ", matchId);
                     match.player1.socket.send(JSON.stringify({type: 'match_ready'}));
                     match.player2.socket.send(JSON.stringify({type: 'match_ready'}));
