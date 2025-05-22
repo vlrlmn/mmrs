@@ -1,6 +1,7 @@
 import { MatchmakingService } from '../../../domain/matchmaking/services/MatchmakingService';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 import { createPlayer } from '../utils/createPlayer';
+import radish from '../../../domain/cache/CacheStorage';
 
 export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) {
   let id : number | undefined;
@@ -10,7 +11,7 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
       if (message.type === 'join') {
           const payload = await isTokenValid(message.token);
           if (!payload) {
-            socket.send(JSON.stringify({type: 'error', message: 'Unauthorized'}));
+            socket.send(JSON.stringify({type: 'unauthorized', message: 'Unauthorized'}));
             socket.close();
             return;
           }
@@ -20,7 +21,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           const res = await fetch(`http://localhost:5000/auth/internal/user/${userId}`);
           const userInfo = await res.json() as {rating: number};
           mmr = userInfo.rating;
-          
           const player = createPlayer(userId.toString(), mmr, socket);
         
           console.log(`(${userId}) joined searching for a match`);
@@ -29,7 +29,7 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
       } else if (message.type === 'match_found') {
         if (!id)
         {
-            socket.send(JSON.stringify({type: 'error', message: 'Unauthorized'}));
+            socket.send(JSON.stringify({type: 'unauthorized', message: 'Unauthorized'}));
             return ;
         }
         console.log(`(${id}) confirmed the match`);
