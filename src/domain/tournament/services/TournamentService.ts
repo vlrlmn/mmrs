@@ -1,5 +1,5 @@
 import { ITournament } from "../ITournament";
-import { Player, TournamentStage, Match } from "../../matchmaking/types";
+import { MatchRecord, Player, TournamentStage, Match } from "../../matchmaking/types";
 import {
     findMatchForWinner,
     confirmWinner,
@@ -11,7 +11,7 @@ import {
 export class TournamentService implements ITournament {
     private tournamentPlayers: Player[] = []
     private stage: TournamentStage = 'registration';
-    private currentMatches: Match[] = [];
+    private currentMatches: MatchRecord[] = [];
     private champion?: Player;
     private readonly onComplete?: () => void;
 

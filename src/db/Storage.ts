@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import IStorage from './IStorage';
 import { syncMigrations } from './migrate'
+import { Match } from '../domain/matchmaking/types';
 
 export class Storage implements IStorage {
 
@@ -17,10 +18,37 @@ export class Storage implements IStorage {
         const migrationsDir = path.resolve(__dirname, 'migrations');
         syncMigrations(this.db, migrationsDir);
     }
+    public updateRatingTransaction(updates: { id: number; rating: number; }[]): void {
+        const stms = this.db.prepare(`
+            UPDATE players
+            SET rating = ?
+            WHERE id = ?
+        `);
 
-    addParticipant(matchId: number, userId: number): void {
+        const transaction = this.db.transaction((updates: {id: number; rating: number }[]) => {
+            for (const update of updates) {
+                stms.run(update.rating, update.id);
+            }
+        });
+        transaction(updates);
+    }
+
+    public getMatchesForUser(userId: number, page: number): Match[] {
+        const offset = page * 10;
+        const stmt = this.db.prepare(`
+            SELECT m.*
+            FROM match m
+            JOIN participant p ON m.id = p.match_id
+            WHERE p.user_id = ?
+            ORDER BY m.started_at DESC
+            LIMIT 10 OFFSET ?
+        `);
+        return stmt.all(userId, offset) as Match[];
+    }
+
+    public addParticipant(matchId: number, userId: number): void {
         const stmt = this.db.prepare(
-            'INSERT INTO participants (match_id, user_id) VALUES (?, ?)'
+            'INSERT INTO participant (match_id, user_id) VALUES (?, ?)'
         );
         stmt.run(matchId, userId);
     }

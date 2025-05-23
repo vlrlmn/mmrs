@@ -22,8 +22,23 @@ export type TournamentStage =
     | 'complete';
 
 export interface Match {
-    player1: Player;
-    player2: Player;
-    winner?: Player;
-    isConfirmed: boolean;
+    id: number;
+    started_at: string;
+    winner_id: number | null;
+    mode: number;
+    status: number;
 }
+export interface MatchRecord {
+  player1: Player;
+  player2: Player;
+  winner?: Player;
+  isConfirmed: boolean;
+}
+
+//old match structure
+// export interface Match {
+//     player1: Player;
+//     player2: Player;
+//     winner?: Player;
+//     isConfirmed: boolean;
+// }

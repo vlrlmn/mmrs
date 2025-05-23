@@ -18,12 +18,12 @@ const routes: IHandler[] = [
   },
   {
     method: 'GET',
-    route: '/',
+    route: '/mmrs/api/rest/stats',
     handler: statsHandler
   },
   {
     method: 'POST',
-    route: '/',
+    route: '/mmrs/internal/match/:matchId/rate',
     handler: rateMatchHandler
   }
 ]

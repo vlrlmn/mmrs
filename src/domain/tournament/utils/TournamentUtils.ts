@@ -1,10 +1,10 @@
-import { Match, Player, TournamentStage } from "../../matchmaking/types"
+import { MatchRecord, Player, TournamentStage } from "../../matchmaking/types"
 
-export function findMatchForWinner(matches: Match[], winner: Player): Match | undefined {
+export function findMatchForWinner(matches: MatchRecord[], winner: Player): MatchRecord | undefined {
     return matches.find(m => m.player1.id === winner.id || m.player2.id === winner.id);
 }
 
-export function confirmWinner(match: Match, winner: Player): void {
+export function confirmWinner(match: MatchRecord, winner: Player): void {
     match.winner = winner;
     match.isConfirmed = true;
 
@@ -16,7 +16,7 @@ export function confirmWinner(match: Match, winner: Player): void {
     }
 }
 
-export function getConfirmedWinners(matches: Match[]): Player[] {
+export function getConfirmedWinners(matches: MatchRecord[]): Player[] {
     return matches
         .filter(m => m.isConfirmed && m.winner)
         .map(m => m.winner!);
@@ -26,7 +26,7 @@ interface stageProgressionContext {
     currentStage: TournamentStage;
     confirmedWinners: Player[];
     setStage: (s: TournamentStage) => void;
-    setMatches: (m: Match[]) => void;
+    setMatches: (m: MatchRecord[]) => void;
     onWin: (champion: Player) => void;
 }
 
@@ -49,12 +49,12 @@ export function handleStageProgression({
     }
 }
 
-export function createNextRoundMatches(players: Player[], stage: TournamentStage): Match[] {
+export function createNextRoundMatches(players: Player[], stage: TournamentStage): MatchRecord[] {
     const randomized = [...players].sort(() => Math.random() - 0.5);
-    const matches : Match[] = [];
+    const matches : MatchRecord[] = [];
 
     for (let i = 0; i < randomized.length; i += 2) {
-        const match: Match = {
+        const match: MatchRecord = {
             player1: randomized[i],
             player2: randomized[i + 1],
             isConfirmed: false,

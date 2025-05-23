@@ -1,21 +1,29 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Storage } from '../../../db/Storage'
-import { db } from '../../../db/Storage';
+import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 
 export async function statsHandler(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const matches = db.prepare(`
-      SELECT m.*
-      FROM matches m
-      JOIN participants p ON m.id = p.match_id
-      WHERE p.user_id = ?
-      ORDER BY m.date DESC
-    `).all(id);
+    const payload = await isTokenValid(request);
+    if (!payload || !payload.userId) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
 
-    
-    reply.code(200).send(matches);
+    const { p } = request.query as { p?: string};
+    const page = parseInt(p || '0');
+    if (isNaN(page)) {
+      return reply.code(400).send({ error: 'Invalid page number' });
+    }
+
+    const storage = request.server.storage;
+    const matches = storage.getMatchesForUser(payload.userId, page);
+
+    if (!matches || matches.length === 0) {
+      return reply.code(204).send();
+    }
+
+    return reply.code(200).send(matches);
   } catch (error) {
     console.error('Error in statsHandler:', error);
-    reply.code(500).send({ error: 'Internal Server Error' });
+    return reply.code(500).send({ error: 'Internal Server Error' });
   }
 }

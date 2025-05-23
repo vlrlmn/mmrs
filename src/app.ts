@@ -24,7 +24,6 @@ async function main() {
   const storagePlugin = fp(async (app) => {
     const storage = new Storage();
     app.decorate('storage', storage);
-
     app.addHook('onClose', (app, done) => {
       storage.close();
       done();
