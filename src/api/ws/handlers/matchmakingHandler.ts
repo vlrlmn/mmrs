@@ -22,10 +22,14 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
         id = userId;
 
         let mmr = 1000;
-        const res = await fetch(`http://localhost:5000/auth/internal/user/${userId}`);
-        const userInfo = await res.json() as { rating: number };
-        mmr = userInfo.rating;
-
+        try {
+          const res = await fetch(`http://localhost:5000/auth/internal/user/${userId}`);
+          const userInfo = await res.json() as { rating: number };
+          mmr = userInfo.rating;
+        } catch (error) {
+          console.error('Invalid request:', error);
+          socket.send(JSON.stringify({ type: 'error', message: 'Invalid request' }));
+        } 
         const player = createPlayer(userId.toString(), mmr, socket);
         console.log(`(${userId}) joined searching for a match`);
         matchmaker.addPlayer(player);
