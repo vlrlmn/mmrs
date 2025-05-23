@@ -77,7 +77,7 @@ export class MatchmakingService implements IMatchmaking {
                         parseInt(match.player1.id),
                         parseInt(match.player2.id)
                     ]);
-                    this.storage.addParticipant(matchId, parseInt(match.player1.id));
+                    this.storage.addParticipant(matchId, parseInt(match.player1.id)); // to db
                     this.storage.addParticipant(matchId, parseInt(match.player2.id));
                     
                     const cache = CacheStorage.getInstance();

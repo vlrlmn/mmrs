@@ -1,6 +1,7 @@
 import { MatchmakingService } from '../../../domain/matchmaking/services/MatchmakingService';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 import { createPlayer } from '../utils/createPlayer';
+import { notifyMMRSOpponentConfirmed } from  '../utils/notifyMMRS'
 
 export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) {
   let id: number | undefined;
@@ -29,28 +30,27 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
         console.log(`(${userId}) joined searching for a match`);
         matchmaker.addPlayer(player);
         socket.send(JSON.stringify({ type: 'searching' }));
+      } else if (message.type === 'match_confirmed') {
+          if (!id) {
+            socket.send(JSON.stringify({ type: 'unauthorized', message: 'Unauthorized' }));
+            return;
+          }
 
-      } else if (message.type === 'match_found') {
-        if (!id) {
-          socket.send(JSON.stringify({ type: 'unauthorized', message: 'Unauthorized' }));
-          return;
-        }
+          console.log(`(${id}) confirmed the match`);
+          const match = matchmaker.findPendingMatch(id.toString());
 
-        console.log(`(${id}) confirmed the match`);
-        const match = matchmaker.findPendingMatch(id.toString());
-
-        if (!match) {
-          console.log(`No pending match found for ${id} yet`);
-          return;
-        }
+          if (!match) {
+            console.log(`No pending match found for ${id} yet`);
+            return;
+          }
 
         const success = await matchmaker.confirmMatch(id.toString());
-
         if (!success) {
           const opponent = match.player1.id === id.toString() ? match.player2 : match.player1;
           if (opponent.socket.readyState === 1) {
             opponent.socket.send(JSON.stringify({ type: 'opponent_confirmed' }));
           }
+          await notifyMMRSOpponentConfirmed(parseInt(id.toString()));
         }
 
       } else if (message.type === 'reject_match') {
@@ -77,6 +77,7 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
 
     } catch (error) {
       console.error('Invalid message format:', error);
+      socket.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
     }
   };
 }

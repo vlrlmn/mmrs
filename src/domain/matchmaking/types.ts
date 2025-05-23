@@ -6,6 +6,7 @@ export interface Player {
 }
 
 export interface PendingMatch {
+    // id: number
     isActive: boolean
     player1: Player
     player2: Player

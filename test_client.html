@@ -98,7 +98,7 @@
         //-------BUTTONS INTERACTION------//
         document.getElementById('confirmBtn').onclick = () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'match_found' }));
+                socket.send(JSON.stringify({ type: 'match_confirmed' }));
                 log('Sent match_found');
                 disableMatchButtons();
             }
