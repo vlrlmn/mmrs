@@ -1,17 +1,21 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { mmrsService } from '../../rest/services/mmrsServices'
+import { Storage } from '../../../db/Storage'
+import { db } from '../../../db/Storage';
 
-type StatsRequest = {
-  Querystring: {
-    p: number;
-  };
-};
+export async function statsHandler(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const matches = db.prepare(`
+      SELECT m.*
+      FROM matches m
+      JOIN participants p ON m.id = p.match_id
+      WHERE p.user_id = ?
+      ORDER BY m.date DESC
+    `).all(id);
 
-export async function statsHandler(req: FastifyRequest<StatsRequest>, reply: FastifyReply) {
-  const page = req.query.p || 1;
-  const limit = 10;
-  const offset = (page - 1) * limit;
-
-  const matches = await mmrsService.getStats(offset, limit);
-  return reply.send(matches);
+    
+    reply.code(200).send(matches);
+  } catch (error) {
+    console.error('Error in statsHandler:', error);
+    reply.code(500).send({ error: 'Internal Server Error' });
+  }
 }

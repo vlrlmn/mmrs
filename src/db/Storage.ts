@@ -55,6 +55,10 @@ export class Storage implements IStorage {
         return this.db.prepare('SELECT * FROM players WHERE id = ?').get(id);
     }
 
+    public getMatch(id: number) {
+        return this.db.prepare('SELECT * FROM ')
+    }
+
     public close() : void {
         this.db.close();
     }
