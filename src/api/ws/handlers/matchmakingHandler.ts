@@ -74,7 +74,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
         matchmaker.removePlayer(id.toString());
         socket.send(JSON.stringify({ type: 'rejected' }));
       }
-
     } catch (error) {
       console.error('Invalid message format:', error);
       socket.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
