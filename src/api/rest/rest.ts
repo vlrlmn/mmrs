@@ -15,6 +15,16 @@ const routes: IHandler[] = [
     method: 'GET',
     route: '/',
     handler: rootHandler
+  },
+  {
+    method: 'GET',
+    route: '/',
+    handler: statsHandler
+  },
+  {
+    method: 'POST',
+    route: '/',
+    handler: rateMatchHandler
   }
 ]
 
@@ -26,7 +36,4 @@ export async function registerRestRoutes(app: FastifyInstance) {
         handler: route.handler
       })
     }
-
-    app.post('/mmrs/internal/match/:matchId/rate', rateMatchHandler);
-    app.get('/mmrs/api/rest/stats', statsHandler);
 }
