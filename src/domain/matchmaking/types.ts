@@ -23,8 +23,8 @@ export type TournamentStage =
 
 export interface Match {
     id: number;
-    started_at: string;
-    winner_id: number | null;
+    startedAt: string;
+    winnerId: number | null;
     mode: number;
     status: number;
 }
