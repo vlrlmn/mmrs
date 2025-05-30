@@ -47,36 +47,20 @@ export class Storage implements IStorage {
     }
 
     public addParticipant(matchId: number, userId: number): void {
-        const stmt = this.db.prepare(
-            'INSERT INTO participant (match_id, user_id) VALUES (?, ?)'
-        );
+        const stmt = this.db.prepare(`
+            INSERT INTO participant (match_id, user_id, rating_change)
+            VALUES (?, ?, 0);
+        `);
         stmt.run(matchId, userId);
     }
 
-    public addMatch(mode: number, participants: number[]): number {
-        const insertMatch = this.db.prepare(`
-        INSERT INTO match (mode)
-        VALUES (?);
+    public addMatch(mode: number): number {
+        const stmt = this.db.prepare(`
+            INSERT INTO match (mode)
+            VALUES (?);
         `);
-
-        const insertParticipant = this.db.prepare(`
-        INSERT INTO participant (match_id, user_id, rating_change)
-        VALUES (?, ?, 0);
-        `);
-
-        let matchId = 0;
-
-        const transaction = this.db.transaction(() => {
-        const result = insertMatch.run(mode);
-        matchId = result.lastInsertRowid as number;
-
-        for (const userId of participants) {
-            insertParticipant.run(matchId, userId);
-        }
-        });
-
-        transaction();
-        return matchId;
+        const result = stmt.run(mode);
+        return result.lastInsertRowid as number; 
     }
 
     public getPlayer(id: number) {

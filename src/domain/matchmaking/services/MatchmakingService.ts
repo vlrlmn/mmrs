@@ -46,13 +46,19 @@ export class MatchmakingService implements IMatchmaking {
 
         for (let i = 0; i < this.queue.length - 1; i++) {
             const player1 = this.queue[i];
+
             const window = getDynamicWindow(player1);
 
             for (let j = i + 1; j < this.queue.length; j++) {
                 const player2 = this.queue[j]
+                if (player1.id === player2.id) {
+                    console.warn(`Self matching ${player1.id}: skipping!`);
+                    continue;
+                }
                 
-                if (player1.id !== player2.id && isWithinMatchWindow(player1, player2, window)) {
-                    this.queue = this.queue.filter(p => p.id !== player1.id && player1.id !== player2.id);
+                if (isWithinMatchWindow(player1, player2, window)) {
+
+                    this.queue = this.queue.filter(p => p.id !== player1.id && p.id !== player2.id);
                     const match = createMatch(player1, player2, this.confirmationTimeout);
                     this.pendingMatches.push(match);
                     return;
@@ -61,39 +67,40 @@ export class MatchmakingService implements IMatchmaking {
         }
     }
 
-    async confirmMatch(playerId: string): Promise<boolean> {
-        for (const match of this.pendingMatches) {
-            if (match.confirmations.hasOwnProperty(playerId)) {
-                match.confirmations[playerId] = true;
+async confirmMatch(playerId: string): Promise<boolean> {
+    for (const match of this.pendingMatches) {
+        if (match.confirmations.hasOwnProperty(playerId)) {
+            match.confirmations[playerId] = true;
 
-                const allConfirmed = match.confirmations[match.player1.id] && match.confirmations[match.player2.id];
-                if (allConfirmed) {
-                    match.isActive = true;
-                    this.pendingMatches = this.pendingMatches.filter(m => m !== match);
-                    this.activeMatches.set(match.player1.id, match);
-                    this.activeMatches.set(match.player2.id, match);
-                    
-                    const matchId = this.storage.addMatch(1, [
-                        parseInt(match.player1.id),
-                        parseInt(match.player2.id)
-                    ]);
-                    this.storage.addParticipant(matchId, parseInt(match.player1.id)); // to db
-                    this.storage.addParticipant(matchId, parseInt(match.player2.id));
-                    
-                    const cache = CacheStorage.getInstance();
-                    await cache.saveUserRating(parseInt(match.player1.id), match.player1.mmr);
-                    await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
+            const allConfirmed =
+                match.confirmations[match.player1.id] &&
+                match.confirmations[match.player2.id];
 
-                    console.log("Match saved in database with id: ", matchId);
-                    match.player1.socket.send(JSON.stringify({type: 'match_ready'}));
-                    match.player2.socket.send(JSON.stringify({type: 'match_ready'}));
+            if (allConfirmed) {
+                match.isActive = true;
+                this.pendingMatches = this.pendingMatches.filter(m => m !== match);
+                this.activeMatches.set(match.player1.id, match);
+                this.activeMatches.set(match.player2.id, match);
 
-                    return true;
-                }
+                const matchId = this.storage.addMatch(1);
+
+                this.storage.addParticipant(matchId, parseInt(match.player1.id));
+                this.storage.addParticipant(matchId, parseInt(match.player2.id));
+
+                const cache = CacheStorage.getInstance();
+                await cache.saveUserRating(parseInt(match.player1.id), match.player1.mmr);
+                await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
+
+                console.log("Match saved in database with id: ", matchId);
+                match.player1.socket.send(JSON.stringify({ type: 'match_ready' }));
+                match.player2.socket.send(JSON.stringify({ type: 'match_ready' }));
+                return true;
             }
         }
-        return false;
     }
+    return false;
+}
+
 
     checkPendingMatches(): void {
         const now = Date.now();
