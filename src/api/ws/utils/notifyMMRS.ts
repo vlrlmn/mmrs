@@ -1,6 +1,6 @@
 export async function notifyMMRSOpponentConfirmed(userId: number): Promise<void> {
   try {
-    await fetch(`http://localhost:5000/mmrs/internal/opponent-confirmed`, {
+    await fetch(`http://localhost:5001/mmrs/internal/opponent-confirmed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId})
