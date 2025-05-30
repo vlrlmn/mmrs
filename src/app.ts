@@ -18,8 +18,6 @@ async function main() {
   });
   
   await app.register(websocket);
-  await registerRestRoutes(app)
-  await registerWsRoutes(app)
   
   const storagePlugin = fp(async (app) => {
     const storage = new Storage();
@@ -29,9 +27,11 @@ async function main() {
       done();
     });
   });
-
-
+  
+  
   await app.register(storagePlugin);
+  await registerRestRoutes(app);
+  await registerWsRoutes(app);
 
   app.listen({ port: Config.getInstance().getPort() }, (err, address) => {
     if (err) {
