@@ -34,11 +34,3 @@ export interface MatchRecord {
   winner?: Player;
   isConfirmed: boolean;
 }
-
-//old match structure
-// export interface Match {
-//     player1: Player;
-//     player2: Player;
-//     winner?: Player;
-//     isConfirmed: boolean;
-// }
