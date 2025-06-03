@@ -8,9 +8,7 @@ import fp from 'fastify-plugin'
 import { Storage } from './storage/Storage'
 import loggerMiddleware from './pkg/middlewares/loggerMiddleware'
 
-const app = Fastify({
-  logger: true,
-})
+const app = Fastify({});
 
 async function main() {
   await app.register(cors, {

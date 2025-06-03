@@ -23,9 +23,40 @@ export default class CacheStorage {
 	}
 
 	public async saveUserRating(userId: number, rating: number, ttl: number = 3600): Promise<void> {
-		const response = await this.radishClient.set(`mmr:${userId}`, rating.toString(), ttl);
-		if (response.status !== 201) {
-			throw CacheSetError;
+		try {
+			const key = `mmr:${userId}`;
+			let keyExists = false;
+
+			try {
+				const getResponse = await this.radishClient.get(key);
+				keyExists = getResponse && getResponse.status === 200;
+			} catch (error) {
+				keyExists = false;
+			}
+			if (keyExists) {
+				await this.radishClient.delete(key);
+			}
+			const response = await this.radishClient.set(`mmr:${userId}`, rating.toString(), ttl);
+			if (!response || typeof response.status !== 'number') {
+				throw new Error('Invalid response from Radish');
+			}
+			if (response.status !== 201) {
+				switch (response.status) {
+					case 400:
+						console.warn(`Radish warning: bad request when saving MMR for user ${userId}`);
+						break;
+					case 409:
+						console.warn(`Radish warning: conflict when saving MMR for user ${userId}`);
+						break;
+					case 500:
+						console.error(`Radish error: internal server error while saving MMR for user ${userId}`);
+						break;
+				}
+				throw CacheSetError;
+			}
+		} catch (error) {
+			console.error(`CacheStorage error: failed to save MMR for user ${userId}`, error);
+			throw error;
 		}
 	}
 

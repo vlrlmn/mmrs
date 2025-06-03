@@ -4,6 +4,7 @@ import { pingHandler } from './handlers/ping'
 import { rootHandler } from './handlers/root'
 import { statsHandler } from './handlers/statsHandler'
 import { rateMatchHandler } from './handlers/rateMatch'
+import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 
 const routes: IHandler[] = [
   {
@@ -25,6 +26,11 @@ const routes: IHandler[] = [
     method: 'POST',
     route: '/mmrs/internal/match/:matchId/rate',
     handler: rateMatchHandler
+  },
+  {
+    method: 'POST',
+    route: '/mmrs/internal/opponent-confirmed',
+    handler: opponentConfirmedHandler
   }
 ]
 
