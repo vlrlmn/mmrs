@@ -6,6 +6,7 @@ import cors from '@fastify/cors'
 import Config from './config/Config'
 import fp from 'fastify-plugin'
 import { Storage } from './storage/Storage'
+import loggerMiddleware from './pkg/middlewares/loggerMiddleware'
 
 const app = Fastify({
   logger: true,
@@ -57,6 +58,7 @@ async function main() {
     console.error('Uncaught Exception:', err)
     process.exit(1)
   })
+  app.addHook('onRequest', loggerMiddleware);
 }
 
 main()
