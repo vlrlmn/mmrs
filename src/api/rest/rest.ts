@@ -5,6 +5,7 @@ import { rootHandler } from './handlers/root'
 import { statsHandler } from './handlers/statsHandler'
 import { rateMatchHandler } from './handlers/rateMatch'
 import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
+import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
 
 const routes: IHandler[] = [
   {
@@ -31,6 +32,11 @@ const routes: IHandler[] = [
     method: 'POST',
     route: '/mmrs/internal/opponent-confirmed',
     handler: opponentConfirmedHandler
+  },
+  {
+    method: 'GET',
+    route: '/mmrs/api/rating/updates/:userId',
+    handler: getRatingUpdatesHandler
   }
 ]
 

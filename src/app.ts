@@ -31,6 +31,7 @@ async function main() {
   await app.register(storagePlugin);
   await registerRestRoutes(app);
   await registerWsRoutes(app);
+  app.addHook('onRequest', loggerMiddleware);
 
   app.listen({ port: Config.getInstance().getPort() }, (err, address) => {
     if (err) {
@@ -56,7 +57,6 @@ async function main() {
     console.error('Uncaught Exception:', err)
     process.exit(1)
   })
-  app.addHook('onRequest', loggerMiddleware);
 }
 
 main()

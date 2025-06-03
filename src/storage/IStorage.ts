@@ -1,5 +1,5 @@
 import 'fastify'
-import { Match} from "../domain/matchmaking/types"
+import { Match } from "../domain/matchmaking/types"
 export interface IStorage {
     updateRatingTransaction(updates: { id: number; rating: number; }[]): void;
     getMatchesForUser(userId: number, page: number): Match[];
@@ -8,6 +8,10 @@ export interface IStorage {
     close(): void;
     testRequestToDB(): Promise<string>;
     addParticipant(matchId: number, userId: number): void;
+    getRatingUpdates(userId: number): {
+        playedMatches: number;
+        updates: { date: string; rate: number }[];
+    };
 };
 
 export default IStorage

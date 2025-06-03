@@ -18,6 +18,34 @@ export class Storage implements IStorage {
         const migrationsDir = path.resolve(__dirname, '../../db/migrations');
         syncMigrations(this.db, migrationsDir);
     }
+
+    public getRatingUpdates(userId: number): {
+        playedMatches: number;
+        updates: { date: string; rate: number }[];
+    }
+    {
+    const countStmt = this.db.prepare(`
+        SELECT COUNT(*) as count
+        FROM participant
+        WHERE user_id = ?
+    `);
+    const { count: playedMatches } = countStmt.get(userId) as { count: number };
+
+    const updatesStmt = this.db.prepare(`
+        SELECT m.started_at as date, COALESCE(p.rating_change, 0) as rate
+        FROM participant p
+        JOIN match m ON p.match_id = m.id
+        WHERE p.user_id = ?
+        ORDER BY m.started_at DESC
+        LIMIT 10
+    `);
+    const updates = updatesStmt.all(userId) as { date: string; rate: number }[];
+
+    return {
+        playedMatches,
+        updates
+        };
+    }
     public updateRatingTransaction(updates: { id: number; rating: number; }[]): void {
         const stms = this.db.prepare(`
             UPDATE players
