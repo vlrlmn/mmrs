@@ -52,7 +52,6 @@ export class MatchmakingService implements IMatchmaking {
             for (let j = i + 1; j < this.queue.length; j++) {
                 const player2 = this.queue[j]
                 if (player1.id === player2.id) {
-                    console.warn(`Self matching ${player1.id}: skipping!`);
                     continue;
                 }
                 
