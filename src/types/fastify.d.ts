@@ -1,5 +1,5 @@
 import 'fastify';
-import { IStorage } from '../db/IStorage';
+import { IStorage } from '../storage/IStorage';
 
 declare module 'fastify' {
   interface FastifyInstance {

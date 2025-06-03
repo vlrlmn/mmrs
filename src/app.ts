@@ -5,7 +5,7 @@ import { registerRestRoutes } from './api/rest/rest'
 import cors from '@fastify/cors'
 import Config from './config/Config'
 import fp from 'fastify-plugin'
-import { Storage } from './db/Storage'
+import { Storage } from './storage/Storage'
 
 const app = Fastify({
   logger: true,

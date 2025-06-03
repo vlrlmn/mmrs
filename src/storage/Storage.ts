@@ -12,10 +12,10 @@ export class Storage implements IStorage {
     private db: Database.Database;
 
     constructor () {
-        const dbPath = path.resolve(__dirname, 'database.db');
+        const dbPath = path.resolve(__dirname, '../../db/database.db');
         this.db = new Database(dbPath);
 
-        const migrationsDir = path.resolve(__dirname, 'migrations');
+        const migrationsDir = path.resolve(__dirname, '../../db/migrations');
         syncMigrations(this.db, migrationsDir);
     }
     public updateRatingTransaction(updates: { id: number; rating: number; }[]): void {

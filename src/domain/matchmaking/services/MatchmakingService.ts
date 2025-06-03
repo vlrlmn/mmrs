@@ -1,7 +1,7 @@
 import { WebsocketHandler } from "@fastify/websocket";
 import { IMatchmaking } from "../IMatchmaking";
 import { Player, PendingMatch } from '../types';
-import { IStorage } from '../../../db/IStorage';
+import { IStorage } from '../../../storage/IStorage';
 import {
     getDynamicWindow,
     isWithinMatchWindow,
