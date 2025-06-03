@@ -92,8 +92,8 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
 
                 console.log("Match saved in database with id: ", matchId);
-                match.player1.socket.send(JSON.stringify({ type: 'match_ready' }));
-                match.player2.socket.send(JSON.stringify({ type: 'match_ready' }));
+                match.player1.socket.send(JSON.stringify({ type: 'match_ready', key: "" }));
+                match.player2.socket.send(JSON.stringify({ type: 'match_ready', key: "" }));
                 return true;
             }
         }
