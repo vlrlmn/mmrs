@@ -24,33 +24,37 @@ export class Storage implements IStorage {
         updates: { date: string; rate: number }[];
     }
     {
-    const countStmt = this.db.prepare(`
-        SELECT COUNT(*) as count
-        FROM participant
-        WHERE user_id = ?
-    `);
-    const { count: playedMatches } = countStmt.get(userId) as { count: number };
+        const countStmt = this.db.prepare(`
+            SELECT COUNT(*) as count
+            FROM participant
+            WHERE user_id = ?
+        `);
+        const { count: playedMatches } = countStmt.get(userId) as { count: number };
 
-    const updatesStmt = this.db.prepare(`
-        SELECT m.started_at as date, COALESCE(p.rating_change, 0) as rate
-        FROM participant p
-        JOIN match m ON p.match_id = m.id
-        WHERE p.user_id = ?
-        ORDER BY m.started_at DESC
-        LIMIT 10
-    `);
-    const updates = updatesStmt.all(userId) as { date: string; rate: number }[];
+        const updatesStmt = this.db.prepare(`
+            SELECT m.started_at as date, COALESCE(p.rating_change, 0) as rate
+            FROM participant p
+            JOIN match m ON p.match_id = m.id
+            WHERE p.user_id = ?
+            ORDER BY m.started_at DESC
+            LIMIT 10
+        `);
+        const updates = updatesStmt.all(userId) as { date: string; rate: number }[];
 
-    return {
-        playedMatches,
-        updates
-        };
+        return {
+            playedMatches,
+            updates
+            };
     }
+
     public updateRatingTransaction(updates: { id: number; rating: number; }[]): void {
         const stms = this.db.prepare(`
-            UPDATE players
-            SET rating = ?
-            WHERE id = ?
+            UPDATE participant
+            SET rating_change = ?
+            WHERE user_id = ?
+            AND match_id = (
+                SELECT id FROM match ORDERED BY id DESC LIMIT 1
+            )
         `);
 
         const transaction = this.db.transaction((updates: {id: number; rating: number }[]) => {
@@ -92,7 +96,7 @@ export class Storage implements IStorage {
     }
 
     public getPlayer(id: number) {
-        return this.db.prepare('SELECT * FROM players WHERE id = ?').get(id);
+        return this.db.prepare('SELECT * FROM participant WHERE user_id = ?').all(id);
     }
 
     public getMatch(id: number) {

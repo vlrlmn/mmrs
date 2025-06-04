@@ -18,7 +18,7 @@ export type TournamentStage =
     'registration'
     | 'semi' 
     | 'quarter' 
-    | 'final' 
+    | 'final'
     | 'complete';
 
 export interface Match {

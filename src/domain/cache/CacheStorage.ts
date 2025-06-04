@@ -54,6 +54,7 @@ export default class CacheStorage {
 				}
 				throw CacheSetError;
 			}
+			console.log("User info saved in database. User id: ", userId);
 		} catch (error) {
 			console.error(`CacheStorage error: failed to save MMR for user ${userId}`, error);
 			throw error;

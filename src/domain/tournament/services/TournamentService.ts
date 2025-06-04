@@ -1,18 +1,9 @@
 import { ITournament } from "../ITournament";
-import { MatchRecord, Player, TournamentStage, Match } from "../../matchmaking/types";
-import {
-    findMatchForWinner,
-    confirmWinner,
-    getConfirmedWinners,
-    createNextRoundMatches,
-    handleStageProgression
-} from "../utils/TournamentUtils"
+import { Player, TournamentStage } from "../../matchmaking/types";
 
 export class TournamentService implements ITournament {
     private tournamentPlayers: Player[] = []
     private stage: TournamentStage = 'registration';
-    private currentMatches: MatchRecord[] = [];
-    private champion?: Player;
     private readonly onComplete?: () => void;
 
     constructor(onComplete?: () => void) {
@@ -21,20 +12,33 @@ export class TournamentService implements ITournament {
 
     resetTournament(): void {
         this.tournamentPlayers = [];
-        this.currentMatches = [];
         this.stage = 'registration';
-        this.champion = undefined;
     }
 
     addPlayer(player: Player): boolean {
         if (this.stage !== 'registration') return false;
 
         this.tournamentPlayers.push(player);
-        if (this.tournamentPlayers.length === 8) {
+        this.broadcastPlayersStatus();
+        if (this.tournamentPlayers.length === 4) {
             this.stage = 'quarter';
-            this.currentMatches = createNextRoundMatches(this.tournamentPlayers, this.stage);
+            // this.currentMatches = createNextRoundMatches(this.tournamentPlayers, this.stage);
         }
         return true;
+    }
+
+    private broadcastPlayersStatus(): void {
+        const count = this.registerPlayers.length;
+        const message =  {
+            message: 'progress',
+            current: count,
+            total: 4
+        }
+        for (const player of this.tournamentPlayers) {
+            if (player.socket.readyState === 1) {
+                player.socket.send(message);
+            }
+        }
     }
 
     getPlayerCount(): number {
@@ -48,33 +52,34 @@ export class TournamentService implements ITournament {
     getCurrentStage(): string {
         return this.stage;
     }
-
-    confirmMatchResult(winner: Player): void {
-        if (!this.currentMatches.length) return;
-
-        const match = findMatchForWinner(this.currentMatches, winner);
-        if (!match || match.isConfirmed) return;
-
-        confirmWinner(match, winner);
-        const confirmedWinners = getConfirmedWinners(this.currentMatches);
-
-        handleStageProgression({
-            currentStage: this.stage,
-            confirmedWinners,
-            setStage: (s) => this.stage = s,
-            setMatches: (m) => this.currentMatches = m,
-            onWin: (champion) => {
-                this.champion = champion;
-                champion.socket.send(JSON.stringify({
-                    type: 'tournamnent_winner'
-                }));
-
-                setTimeout(() => {
-                    this.resetTournament();
-                    console.log("New tournament");
-                    this.onComplete?.();
-                }, 3000);
-            }
-        });
-    }
 }
+
+//     confirmMatchResult(winner: Player): void {
+//         if (!this.currentMatches.length) return;
+
+//         const match = findMatchForWinner(this.currentMatches, winner);
+//         if (!match || match.isConfirmed) return;
+
+//         confirmWinner(match, winner);
+//         const confirmedWinners = getConfirmedWinners(this.currentMatches);
+
+//         handleStageProgression({
+//             currentStage: this.stage,
+//             confirmedWinners,
+//             setStage: (s) => this.stage = s,
+//             setMatches: (m) => this.currentMatches = m,
+//             onWin: (champion) => {
+//                 this.champion = champion;
+//                 champion.socket.send(JSON.stringify({
+//                     type: 'tournamnent_winner'
+//                 }));
+
+//                 setTimeout(() => {
+//                     this.resetTournament();
+//                     console.log("New tournament");
+//                     this.onComplete?.();
+//                 }, 3000);
+//             }
+//         });
+//     }
+// }
