@@ -1,12 +1,13 @@
 import { ITournament } from "../ITournament";
 import { Player, TournamentStage } from "../../matchmaking/types";
+import { IStorage } from '../../../storage/IStorage';
 
 export class TournamentService implements ITournament {
     private tournamentPlayers: Player[] = []
     private stage: TournamentStage = 'registration';
     private readonly onComplete?: () => void;
 
-    constructor(onComplete?: () => void) {
+    constructor(private readonly storage: IStorage, onComplete?: () => void) {
         this.onComplete = onComplete;
     }
 
@@ -21,7 +22,12 @@ export class TournamentService implements ITournament {
         this.tournamentPlayers.push(player);
         this.broadcastPlayersStatus();
         if (this.tournamentPlayers.length === 4) {
-            this.stage = 'quarter';
+            
+            const matchId = this.storage.addMatch(2);
+            for (const player of this.tournamentPlayers ) {
+                this.storage.addParticipant(matchId, parseInt(player.id));
+            }
+            // this.stage = 'quarter';
             // this.currentMatches = createNextRoundMatches(this.tournamentPlayers, this.stage);
         }
         return true;
@@ -30,7 +36,7 @@ export class TournamentService implements ITournament {
     private broadcastPlayersStatus(): void {
         const count = this.registerPlayers.length;
         const message =  {
-            message: 'progress',
+            message: 'tournamnet_lobby_counter',
             current: count,
             total: 4
         }

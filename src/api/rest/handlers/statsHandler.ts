@@ -20,7 +20,6 @@ export async function statsHandler(request: FastifyRequest, reply: FastifyReply)
     if (!matches || matches.length === 0) {
       return reply.code(204).send();
     }
-
     return reply.code(200).send(matches);
   } catch (error) {
     console.error('Error in statsHandler:', error);

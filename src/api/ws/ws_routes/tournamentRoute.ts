@@ -7,7 +7,7 @@ const tournaments: Map<string, TournamentService> = new Map();
 
 export async function registerTournamentRoute(app: FastifyInstance) {
   app.get('/tournament', { websocket: true }, (socket: any, req: FastifyRequest) => {
-    const { id, name, mmr, tid } = req.query as any;
+    const { id, mmr, tid } = req.query as any;
 
     if (!tid) {
       socket.send(JSON.stringify({ type: 'error', message: 'Tournament ID (tid) is required' }));
@@ -32,6 +32,6 @@ export async function registerTournamentRoute(app: FastifyInstance) {
       socket.close();
       return;
     }
-    tournamentHandler(socket, req, id, mmr, tournament);
+    // tournamentHandler(socket, req, id, mmr, tournament);
   });
 }

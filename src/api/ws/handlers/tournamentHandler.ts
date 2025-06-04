@@ -19,7 +19,7 @@ export function tournamentHandler(
 
             if (message.type === 'match_result') {
                 console.log(`(${id}) confirmed match`);
-                tournament.confirmMatchResult(player);
+                // tournament.confirmMatchResult(player);
 
                 const stage = tournament.getCurrentStage();
 

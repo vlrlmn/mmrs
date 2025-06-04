@@ -37,7 +37,12 @@ const routes: IHandler[] = [
     method: 'GET',
     route: '/mmrs/api/rating/updates/:userId',
     handler: getRatingUpdatesHandler
-  }
+  },
+  {
+    method: 'POST',
+    route: '/mmrs/internal/tournament-ready',
+    handler: tournamentReadyHandler
+  },
 ]
 
 export async function registerRestRoutes(app: FastifyInstance) {
