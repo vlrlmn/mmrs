@@ -1,12 +1,12 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { TournamentService } from '../../../domain/tournament/services/TournamentService';
 import { createPlayer } from '../utils/createPlayer';
-import { tournamentHandler } from '../handlers/tournamentHandler';
+import { Storage } from '../../../storage/Storage';
 
 const tournaments: Map<string, TournamentService> = new Map();
 
 export async function registerTournamentRoute(app: FastifyInstance) {
-  app.get('/tournament', { websocket: true }, (socket: any, req: FastifyRequest) => {
+  app.get('/tournament', { websocket: true }, async (socket: any, req: FastifyRequest) => {
     const { id, mmr, tid } = req.query as any;
 
     if (!tid) {
@@ -19,19 +19,20 @@ export async function registerTournamentRoute(app: FastifyInstance) {
 
     let tournament = tournaments.get(tid);
     if (!tournament) {
-      tournament = new TournamentService(() => {
+      const storage = new Storage();
+      tournament = new TournamentService(storage, () => {
         tournaments.delete(tid);
         console.log(`Tournament ${tid} removed`);
       });
       tournaments.set(tid, tournament);
     }
 
-    const added = tournament.addPlayer(player);
+    const added = await tournament.addPlayer(player);
     if (!added) {
       socket.send(JSON.stringify({ type: 'error', message: 'Tournament already in progress' }));
       socket.close();
       return;
     }
-    // tournamentHandler(socket, req, id, mmr, tournament);
   });
 }
+// tournamentHandler(socket, req, id, mmr, tournament);

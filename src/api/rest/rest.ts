@@ -6,6 +6,7 @@ import { statsHandler } from './handlers/statsHandler'
 import { rateMatchHandler } from './handlers/rateMatch'
 import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
+import { handleTournamentResults } from './handlers/tournamentReadyHandler'
 
 const routes: IHandler[] = [
   {
@@ -39,9 +40,9 @@ const routes: IHandler[] = [
     handler: getRatingUpdatesHandler
   },
   {
-    method: 'POST',
-    route: '/mmrs/internal/tournament-ready',
-    handler: tournamentReadyHandler
+    method: 'PATCH',
+    route: '/mmrs/internal/results',
+    handler: handleTournamentResults
   },
 ]
 

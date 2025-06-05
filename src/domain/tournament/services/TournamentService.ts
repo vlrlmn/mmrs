@@ -11,12 +11,7 @@ export class TournamentService implements ITournament {
         this.onComplete = onComplete;
     }
 
-    resetTournament(): void {
-        this.tournamentPlayers = [];
-        this.stage = 'registration';
-    }
-
-    addPlayer(player: Player): boolean {
+    async addPlayer(player: Player): Promise<boolean> {
         if (this.stage !== 'registration') return false;
 
         this.tournamentPlayers.push(player);
@@ -27,14 +22,18 @@ export class TournamentService implements ITournament {
             for (const player of this.tournamentPlayers ) {
                 this.storage.addParticipant(matchId, parseInt(player.id));
             }
-            // this.stage = 'quarter';
-            // this.currentMatches = createNextRoundMatches(this.tournamentPlayers, this.stage);
+            const playersIds = this.tournamentPlayers.map( p => parseInt(p.id));
+            await fetch('http://localhost:5002/start-tournament', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ matchId, playersIds })
+            });
         }
         return true;
     }
 
     private broadcastPlayersStatus(): void {
-        const count = this.registerPlayers.length;
+        const count = this.tournamentPlayers.length;
         const message =  {
             message: 'tournamnet_lobby_counter',
             current: count,
@@ -47,17 +46,9 @@ export class TournamentService implements ITournament {
         }
     }
 
-    getPlayerCount(): number {
-        return this.tournamentPlayers.length;
-    }
-    
-    registerPlayers(player: Player): void {
-        this.tournamentPlayers.push(player);
-    }
-    
-    getCurrentStage(): string {
-        return this.stage;
-    }
+    // getCurrentStage(): string {
+    //     return this.stage;
+    // }
 }
 
 //     confirmMatchResult(winner: Player): void {
