@@ -1,7 +1,7 @@
 import { MatchmakingService } from '../../../domain/matchmaking/services/MatchmakingService';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 import { createPlayer } from '../utils/createPlayer';
-import { notifyMMRSOpponentConfirmed } from  '../utils/notifyMMRS'
+// import { notifyMMRSOpponentConfirmed } from  '../utils/notifyMMRS'
 
 export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) {
   let id: number | undefined;
@@ -54,7 +54,9 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           if (opponent.socket.readyState === 1) {
             opponent.socket.send(JSON.stringify({ type: 'opponent_confirmed' }));
           }
-          await notifyMMRSOpponentConfirmed(parseInt(id.toString()));
+          console.log(`Opponent confirmed for user ${id}`);
+
+          // await notifyMMRSOpponentConfirmed(parseInt(id.toString()));
         }
 
       } else if (message.type === 'reject_match') {
