@@ -55,13 +55,11 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
             opponent.socket.send(JSON.stringify({ type: 'opponent_confirmed' }));
           }
           console.log(`Opponent confirmed for user ${id}`);
-
-          // await notifyMMRSOpponentConfirmed(parseInt(id.toString()));
         }
 
       } else if (message.type === 'reject_match') {
         if (!id) {
-          socket.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+          socket.send(JSON.stringify({ type: 'unauthorized', message: 'Unauthorized' }));
           return;
         }
 
@@ -72,7 +70,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           if (opponent.socket.readyState === 1) {
             opponent.socket.send(JSON.stringify({ type: 'opponent_rejected' }));
           }
-
           matchmaker.removePendingMatch(match);
           matchmaker.addPlayer(opponent);
         }

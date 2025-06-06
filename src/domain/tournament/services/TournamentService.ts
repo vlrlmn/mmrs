@@ -1,10 +1,9 @@
 import { ITournament } from "../ITournament";
 import { Player, TournamentStage } from "../../matchmaking/types";
 import { IStorage } from '../../../storage/IStorage';
-
 export class TournamentService implements ITournament {
-    private tournamentPlayers: Player[] = []
-    private stage: TournamentStage = 'registration';
+    private tournamentPlayers: Map<string, Player> = new Map();
+    private socketToPlayerId: Map<any, string> = new Map();
     private readonly onComplete?: () => void;
 
     constructor(private readonly storage: IStorage, onComplete?: () => void) {
@@ -12,71 +11,69 @@ export class TournamentService implements ITournament {
     }
 
     async addPlayer(player: Player): Promise<boolean> {
-        if (this.stage !== 'registration') return false;
-
-        this.tournamentPlayers.push(player);
+        this.tournamentPlayers.set(player.id, player);
+        this.socketToPlayerId.set(player.socket, player.id);
         this.broadcastPlayersStatus();
-        if (this.tournamentPlayers.length === 4) {
-            
+
+        if (this.tournamentPlayers.size === 4) {
             const matchId = this.storage.addMatch(2);
-            for (const player of this.tournamentPlayers ) {
+            for (const player of this.tournamentPlayers.values()) {
                 this.storage.addParticipant(matchId, parseInt(player.id));
             }
-            const playersIds = this.tournamentPlayers.map( p => parseInt(p.id));
+            const playersIds = Array.from(this.tournamentPlayers.values()).map(p => parseInt(p.id));
             await fetch('http://localhost:5002/start-tournament', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ matchId, playersIds })
             });
+
+            for (const player of this.tournamentPlayers.values()) {
+                try {
+                    player.socket.send(JSON.stringify({type: 'start_game', message: 'Tournament started!'}));
+                    player.socket.close();
+                } catch(error) {
+                    console.log(`Failed to close socket for player ${player.id}`);
+                }
+            }
+            this.onComplete?.();
         }
         return true;
     }
 
     private broadcastPlayersStatus(): void {
-        const count = this.tournamentPlayers.length;
-        const message =  {
+        const count = this.tournamentPlayers.size;
+        const message =  JSON.stringify ({
             message: 'tournamnet_lobby_counter',
             current: count,
             total: 4
-        }
-        for (const player of this.tournamentPlayers) {
+        });
+
+        for (const player of this.tournamentPlayers.values()) {
             if (player.socket.readyState === 1) {
                 player.socket.send(message);
             }
         }
     }
 
-    // getCurrentStage(): string {
-    //     return this.stage;
-    // }
+    removePlayer(playerId: string): void {
+        if (this.tournamentPlayers.has(playerId)) {
+            const player = this.tournamentPlayers.get(playerId);
+            if (player) {
+                this.socketToPlayerId.delete(player.socket);
+            }
+
+            this.tournamentPlayers.delete(playerId);
+            console.log(`Removed player ${playerId} from tournament`);
+            this.broadcastPlayersStatus();
+        }
+
+        if (this.tournamentPlayers.size === 0) {
+            console.log("All players left. Ending tournament.");
+            this.onComplete?.();
+        }
+    }
+
+    public getPlayerIdBySocket(socket: any): string | undefined {
+        return this.socketToPlayerId.get(socket);
+    }
 }
-
-//     confirmMatchResult(winner: Player): void {
-//         if (!this.currentMatches.length) return;
-
-//         const match = findMatchForWinner(this.currentMatches, winner);
-//         if (!match || match.isConfirmed) return;
-
-//         confirmWinner(match, winner);
-//         const confirmedWinners = getConfirmedWinners(this.currentMatches);
-
-//         handleStageProgression({
-//             currentStage: this.stage,
-//             confirmedWinners,
-//             setStage: (s) => this.stage = s,
-//             setMatches: (m) => this.currentMatches = m,
-//             onWin: (champion) => {
-//                 this.champion = champion;
-//                 champion.socket.send(JSON.stringify({
-//                     type: 'tournamnent_winner'
-//                 }));
-
-//                 setTimeout(() => {
-//                     this.resetTournament();
-//                     console.log("New tournament");
-//                     this.onComplete?.();
-//                 }, 3000);
-//             }
-//         });
-//     }
-// }
