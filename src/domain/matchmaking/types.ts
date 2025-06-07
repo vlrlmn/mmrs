@@ -35,3 +35,7 @@ export interface MatchRecord {
   winner?: Player;
   isConfirmed: boolean;
 }
+
+export interface OfflineMatchRequest {
+    mode: number;
+}

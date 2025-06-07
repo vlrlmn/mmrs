@@ -1,9 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Storage } from "../../../storage/Storage";
-
-interface OfflineMatchRequest {
-    mode: number;
-}
+import { OfflineMatchRequest } from "../../../domain/matchmaking/types";
 
 export async function createOfflineMatchHandler(request: FastifyRequest, reply: FastifyReply) {
     const storage = new Storage();
