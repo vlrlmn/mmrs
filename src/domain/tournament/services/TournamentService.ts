@@ -21,7 +21,7 @@ export class TournamentService implements ITournament {
                 this.storage.addParticipant(matchId, parseInt(player.id));
             }
             const playersIds = Array.from(this.tournamentPlayers.values()).map(p => parseInt(p.id));
-            await fetch('http://localhost:5002/game/internal/tournament', {
+            await fetch('http://localhost:5002/game/internal/match', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ matchId, playersIds })
