@@ -15,18 +15,25 @@ export class MatchmakingService implements IMatchmaking {
     private pendingMatches: PendingMatch[] = []
     private confirmationTimeout = 20000;
     private activeMatches: Map<string, PendingMatch> = new Map();
+    private socketToPlayerId: Map<any, string> = new Map();
 
-    constructor (private readonly storage: IStorage) {
-        
-    }
+    constructor (private readonly storage: IStorage) {}
 
     addPlayer(player: Player): void {
-        this.queue.push(player)
+        this.queue.push(player);
+        this.socketToPlayerId.set(player.socket, player.id);
     }
 
     removePlayer(id: string): void {
        this.queue = this.queue.filter(p => p.id !== id)
        this.activeMatches.delete(id);
+       for (const [sock, playerId] of this.socketToPlayerId.entries()) {
+            if (playerId === id) {
+                this.socketToPlayerId.delete(sock);
+                break;
+            }
+        }
+        console.log(`Removed player (${id}) from matchmaking`);
     }
 
     getActiveMatchOf(id: string): PendingMatch | undefined {
@@ -91,6 +98,24 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
 
                 console.log("Match saved in database with id: ", matchId);
+
+                try {
+                    await fetch('http://localhost:5002/game/internal/match', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: matchId,
+                            players: [
+                                parseInt(match.player1.id),
+                                parseInt(match.player2.id)
+                            ]
+                        })
+                    });
+                    console.log(`Game server notified: match ${matchId} created.`);
+                } catch (error) {
+                    console.error(`Failed to notify game server about match ${matchId}:`, error);
+                }
+                
                 match.player1.socket.send(JSON.stringify({ type: 'match_ready'}));
                 match.player2.socket.send(JSON.stringify({ type: 'match_ready'}));
                 return true;
@@ -123,4 +148,9 @@ async confirmMatch(playerId: string): Promise<boolean> {
     removePendingMatch(match: PendingMatch): void {
         this.pendingMatches = this.pendingMatches.filter(m => m !== match);
     }
+
+    public getPlayerIdBySocket(socket: any): string | undefined {
+        return this.socketToPlayerId.get(socket);
+    }
+
 }

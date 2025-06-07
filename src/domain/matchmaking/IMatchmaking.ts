@@ -7,4 +7,5 @@ export interface IMatchmaking {
     checkPendingMatches(): void;
     findPendingMatch(playerId: string): PendingMatch | undefined ;
     removePendingMatch(match: PendingMatch): void ;
+    getPlayerIdBySocket(socket: any): string | undefined;
 }
