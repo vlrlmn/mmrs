@@ -20,7 +20,17 @@ export async function statsHandler(request: FastifyRequest, reply: FastifyReply)
     if (!matches || matches.length === 0) {
       return reply.code(204).send();
     }
-    return reply.code(200).send(matches);
+
+    const response = matches.map(m => ({
+      id: m.id,
+      startedAt: m.started_at,
+      winnerId: m.winner_id,
+      mode: m.mode,
+      status: m.status,
+      isOnline: !!m.is_online
+    }));
+
+    return reply.code(200).send(response);
   } catch (error) {
     console.error('Error in statsHandler:', error);
     return reply.code(500).send({ error: 'Internal Server Error' });

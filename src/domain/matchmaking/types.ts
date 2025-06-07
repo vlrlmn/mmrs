@@ -27,6 +27,7 @@ export interface Match {
     winnerId: number | null;
     mode: number;
     status: number;
+    isOnline?: boolean;
 }
 export interface MatchRecord {
   player1: Player;

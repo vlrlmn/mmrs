@@ -65,7 +65,7 @@ export class Storage implements IStorage {
         transaction(updates);
     }
 
-    public getMatchesForUser(userId: number, page: number): Match[] {
+    public getMatchesForUser(userId: number, page: number): any[] {
         const offset = page * 10;
         const stmt = this.db.prepare(`
             SELECT m.*
@@ -95,13 +95,19 @@ export class Storage implements IStorage {
         return result.lastInsertRowid as number; 
     }
 
+    public addOfflineMatch(mode: number): number {
+        const stmt = this.db.prepare(`
+            INSERT INTO match (mode, is_online)
+            VALUES (?, 0);
+        `);
+        const result = stmt.run(mode);
+        return result.lastInsertRowid as number;
+    }
+
+
     public getPlayer(id: number) {
         return this.db.prepare('SELECT * FROM participant WHERE user_id = ?').all(id);
     }
-
-    // public getMatch(id: number) {
-    //     return this.db.prepare('SELECT * FROM ')
-    // }
 
     public close() : void {
         this.db.close();
