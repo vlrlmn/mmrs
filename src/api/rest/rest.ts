@@ -47,7 +47,7 @@ const routes: IHandler[] = [
   },
   {
     method: 'POST',
-    route: '/offline-match',
+    route: '/mmrs/api/offline-match',
     handler: createOfflineMatchHandler
   }
 ]
