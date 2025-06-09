@@ -1,6 +1,7 @@
 import 'fastify'
 import { Match } from "../domain/matchmaking/types"
 export interface IStorage {
+    updateMatchWinner(matchId: number, winnerId: number): void;
     updateRatingTransaction(updates: { id: number; rating: number; }[]): void;
     getMatchesForUser(userId: number, page: number): any[];
     addMatch(mode: number): number;

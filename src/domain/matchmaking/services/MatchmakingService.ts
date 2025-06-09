@@ -115,7 +115,6 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 } catch (error) {
                     console.error(`Failed to notify game server about match ${matchId}:`, error);
                 }
-                
                 match.player1.socket.send(JSON.stringify({ type: 'match_ready'}));
                 match.player2.socket.send(JSON.stringify({ type: 'match_ready'}));
                 return true;

@@ -39,6 +39,10 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
     }
 
     req.server.storage.updateRatingTransaction(updates);
+    const winner = results.find(r => r.place === 1);
+    if (winner) {
+      req.server.storage.updateMatchWinner(matchId, winner.userId);
+    }
     return reply.code(200).send({ success: true, updated: updates.length });
   } catch (error: any) {
     console.error(error);

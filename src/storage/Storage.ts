@@ -18,6 +18,14 @@ export class Storage implements IStorage {
         const migrationsDir = path.resolve(__dirname, '../../db/migrations');
         syncMigrations(this.db, migrationsDir);
     }
+    public updateMatchWinner(matchId: number, winnerId: number): void {
+        const stmt = this.db.prepare(`
+            UPDATE match
+            SET winner_id = ?
+            WHERE id = ?
+        `)
+        stmt.run(winnerId, matchId);
+    }
 
     public getRatingUpdates(userId: number): {
         playedMatches: number;
