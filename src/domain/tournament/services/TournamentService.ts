@@ -1,6 +1,7 @@
 import { ITournament } from "../ITournament";
 import { Player, TournamentStage } from "../../matchmaking/types";
 import { IStorage } from '../../../storage/IStorage';
+import CacheStorage from "../../cache/CacheStorage";
 export class TournamentService implements ITournament {
     private tournamentPlayers: Map<string, Player> = new Map();
     private socketToPlayerId: Map<any, string> = new Map();
@@ -19,6 +20,11 @@ export class TournamentService implements ITournament {
             const matchId = this.storage.addMatch(2);
             for (const player of this.tournamentPlayers.values()) {
                 this.storage.addParticipant(matchId, parseInt(player.id));
+            }
+
+            const cache = CacheStorage.getInstance();
+            for (const player of this.tournamentPlayers.values()) {
+                await cache.saveUserRating(parseInt(player.id), player.mmr);
             }
             const playersIds = Array.from(this.tournamentPlayers.values()).map(p => parseInt(p.id));
             await fetch('http://localhost:5002/game/internal/match', {
