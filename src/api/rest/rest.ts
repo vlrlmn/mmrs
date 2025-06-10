@@ -8,6 +8,7 @@ import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
 import { handleTournamentResults } from './handlers/handleTournamentResults'
 import { createOfflineMatchHandler } from './handlers/createOfflineMatchHandler'
+import { reconnectPlayerHandler } from './handlers/reconnectPlayerHandler'
 
 const routes: IHandler[] = [
   {
@@ -49,7 +50,13 @@ const routes: IHandler[] = [
     method: 'POST',
     route: '/mmrs/api/offline-match',
     handler: createOfflineMatchHandler
+  },
+  {
+    method: 'GET',
+    route: '/mmrs/api/rest/reconnect',
+    handler: reconnectPlayerHandler
   }
+
 ]
 
 export async function registerRestRoutes(app: FastifyInstance) {

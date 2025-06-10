@@ -7,7 +7,7 @@ import { tournamentCloseHandler } from '../handlers/tournamentCloseHandler';
 const tournaments: Map<string, TournamentService> = new Map();
 
 export async function registerTournamentRoute(app: FastifyInstance) {
-  app.get('/tournament', { websocket: true }, async (socket: any, req: FastifyRequest) => {
+  app.get('/mmrs/api/ws/tournament', { websocket: true }, async (socket: any, req: FastifyRequest) => {
     const { tid } = req.query as any; 
 
     if (!tid) {

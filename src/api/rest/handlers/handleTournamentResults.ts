@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { Storage } from '../../../storage/Storage';
+import CacheStorage from '../../../domain/cache/CacheStorage';
 
 export async function handleTournamentResults(req: FastifyRequest, reply: FastifyReply) {
   try {
@@ -21,7 +22,11 @@ export async function handleTournamentResults(req: FastifyRequest, reply: Fastif
 
     const storage = new Storage();
     storage.updateRatingTransaction(ratingUpdates);
-
+    const cache = CacheStorage.getInstance();
+    for (const userId of results) {
+      await cache.deletePlayerMatch(userId.toString());
+      await cache.deleteUserRating(userId);
+    }
     return reply.code(200).send({ message: 'Ratings updated' });
   } catch (err) {
     console.error(err);

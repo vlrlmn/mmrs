@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import CacheStorage from '../../../domain/cache/CacheStorage';
 
 export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply) {
    try {
@@ -23,25 +24,35 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
     }
 
     const updates: Array<{ id: number, rating: number }> = [];
+    const cache = CacheStorage.getInstance();
 
     for (const result of results) {
       if (typeof result.userId !== 'number' || typeof result.place !== 'number') {
         return reply.code(400).send({ error: 'Invalid userId or place format' });
       }
 
-      if (result.place === 1) {
-        updates.push({ id: result.userId, rating: 25 });
-      }
-    }
+      const currentRating = await cache.getUserRating(result.userId) as number;
+      let ratingChange = 0;
 
-    if (updates.length === 0) {
-      return reply.code(204).send();
+      if (result.place === 1) {
+        ratingChange = 25;
+      } else {
+        ratingChange = (currentRating - 25 < 0) ? -currentRating : -25;
+      }
+        updates.push({ id: result.userId, rating: ratingChange });
+    }
+      if (updates.length === 0) {
+        return reply.code(204).send();
     }
 
     req.server.storage.updateRatingTransaction(updates);
     const winner = results.find(r => r.place === 1);
     if (winner) {
       req.server.storage.updateMatchWinner(matchId, winner.userId);
+    }
+    for (const result of results) {
+      await cache.deletePlayerMatch(result.userId.toString());
+      await cache.deleteUserRating(result.userId);
     }
     return reply.code(200).send({ success: true, updated: updates.length });
   } catch (error: any) {

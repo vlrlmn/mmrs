@@ -6,7 +6,7 @@ import { matchCloseHandler } from '../handlers/disconnectHandler';
 export async function registerMatchmakingRoute(app: FastifyInstance) {
   const matchmaker = new MatchmakingService(app.storage);
 
-  app.get('/matchmaking', { websocket: true }, (socket: any, req: FastifyRequest) => {
+  app.get('/mmrs/api/ws/matchmaking', { websocket: true }, (socket: any, req: FastifyRequest) => {
     socket.on('message', matchmakingHandler(socket, matchmaker));
     socket.on('close', matchCloseHandler(socket, matchmaker));
   });
