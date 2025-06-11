@@ -44,6 +44,7 @@ export class Storage implements IStorage {
             FROM participant p
             JOIN match m ON p.match_id = m.id
             WHERE p.user_id = ?
+            AND p.rating_change != 0
             ORDER BY m.started_at DESC
             LIMIT 10
         `);
