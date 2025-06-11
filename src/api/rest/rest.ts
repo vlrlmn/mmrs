@@ -38,17 +38,12 @@ const routes: IHandler[] = [
   },
   {
     method: 'GET',
-    route: '/mmrs/api/rating/updates/:userId',
+    route: '/mmrs/api/rest/rating/updates/:userId',
     handler: getRatingUpdatesHandler
   },
   {
-    method: 'PATCH',
-    route: '/mmrs/internal/results',
-    handler: handleTournamentResults
-  },
-  {
     method: 'POST',
-    route: '/mmrs/api/offline-match',
+    route: '/mmrs/api/rest/offline-match',
     handler: createOfflineMatchHandler
   },
   {
