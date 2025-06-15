@@ -87,9 +87,8 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 this.pendingMatches = this.pendingMatches.filter(m => m !== match);
                 this.activeMatches.set(match.player1.id, match);
                 this.activeMatches.set(match.player2.id, match);
-
                 const matchId = this.storage.addMatch(1);
-
+                
                 this.storage.addParticipant(matchId, parseInt(match.player1.id));
                 this.storage.addParticipant(matchId, parseInt(match.player2.id));
 
@@ -111,11 +110,28 @@ async confirmMatch(playerId: string): Promise<boolean> {
                             ]
                         })
                     });
+                    this.storage.setMatchStatus(matchId, 'active');
                     console.log(`Game server notified: match ${matchId} created.`);
                     await cache.savePlayerMatch(`playing-${match.player1.id}`, matchId.toString());
                     await cache.savePlayerMatch(`playing-${match.player2.id}`, matchId.toString());
                 } catch (error) {
                     console.error(`Failed to notify game server about match ${matchId}:`, error);
+                    this.storage.setMatchStatus(matchId, "failed");
+                    this.activeMatches.delete(match.player1.id);
+                    this.activeMatches.delete(match.player2.id);
+                    this.addPlayer(match.player1);
+                    this.addPlayer(match.player2);
+
+                     match.player1.socket.send(JSON.stringify({
+                        type: 'match_failed',
+                        reason: 'Game server did not respond'
+                    }));
+                    match.player2.socket.send(JSON.stringify({
+                        type: 'match_failed',
+                        reason: 'Game server did not respond'
+                    }));
+
+                    return false;
                 }
                 match.player1.socket.send(JSON.stringify({ type: 'match_ready'}));
                 match.player2.socket.send(JSON.stringify({ type: 'match_ready'}));

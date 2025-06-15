@@ -13,6 +13,7 @@ export interface IStorage {
         playedMatches: number;
         updates: { date: string; rate: number }[];
     };
+    setMatchStatus(matchId: number, status: 'active' | 'failed'): void; // finished needed?
 };
 
 export default IStorage
