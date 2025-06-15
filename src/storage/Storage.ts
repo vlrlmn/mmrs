@@ -61,19 +61,17 @@ export class Storage implements IStorage {
             };
     }
 
-    public updateRatingTransaction(updates: { id: number; rating: number; }[]): void {
-        const stms = this.db.prepare(`
+    public updateRatingTransaction( matchId: number, updates: { id: number; rating: number }[]): void {
+         const stmt = this.db.prepare(`
             UPDATE participant
             SET rating_change = ?
             WHERE user_id = ?
-            AND match_id = (
-                SELECT id FROM match ORDER BY id DESC LIMIT 1
-            )
+            AND match_id = ?
         `);
 
         const transaction = this.db.transaction((updates: {id: number; rating: number }[]) => {
             for (const update of updates) {
-                stms.run(update.rating, update.id);
+                stmt.run(update.rating, update.id, matchId);
             }
         });
         transaction(updates);

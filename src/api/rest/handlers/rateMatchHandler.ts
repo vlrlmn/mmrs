@@ -73,7 +73,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
       return reply.code(400).send({ error: 'Unsupported match format' });
     }
 
-    req.server.storage.updateRatingTransaction(updates);
+    req.server.storage.updateRatingTransaction(matchId, updates);
     const winner = results.find(r => r.place === 1);
     if (winner) {
       req.server.storage.updateMatchWinner(matchId, winner.userId);

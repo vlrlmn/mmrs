@@ -21,7 +21,7 @@ export async function handleTournamentResults(req: FastifyRequest, reply: Fastif
     ];
 
     const storage = new Storage();
-    storage.updateRatingTransaction(ratingUpdates);
+    storage.updateRatingTransaction(matchId, ratingUpdates);
     const cache = CacheStorage.getInstance();
     for (const userId of results) {
       await cache.deletePlayerMatch(userId.toString());
