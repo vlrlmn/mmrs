@@ -67,7 +67,7 @@ export class Storage implements IStorage {
             SET rating_change = ?
             WHERE user_id = ?
             AND match_id = (
-                SELECT id FROM match ORDERED BY id DESC LIMIT 1
+                SELECT id FROM match ORDER BY id DESC LIMIT 1
             )
         `);
 
