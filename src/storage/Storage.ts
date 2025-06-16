@@ -19,7 +19,7 @@ export class Storage implements IStorage {
         syncMigrations(this.db, migrationsDir);
     }
 
-    public setMatchStatus(matchId: number, status: 'pending' | 'active' | 'failed'): void {
+    public setMatchStatus(matchId: number, status: 'pending' | 'active' | 'failed' | 'finished'): void {
         const stmt = this.db.prepare(`UPDATE match SET status = ? WHERE id = ?`);
         stmt.run(status, matchId);
     }
