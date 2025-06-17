@@ -16,6 +16,8 @@ export default class Config {
   private readonly radishPort: number;
   private readonly port: number;
   private readonly allowedOrigin: string;
+  private readonly gameAddr: string;
+  private readonly umsAddr: string;
 
   private constructor() {
     this.mode = process.env.MODE || "develop";
@@ -23,6 +25,8 @@ export default class Config {
     this.radishPort = Number(process.env.RADISH_PORT)  || 5100;
     this.port = Number(process.env.PORT) || 3000;
     this.allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+    this.gameAddr = process.env.GAME_ADDR || 'localhost:5002/game';
+    this.umsAddr = process.env.UMS_ADDR || 'localhost:5000/auth'
   }
 
   public static getInstance(): Config {
@@ -43,7 +47,7 @@ export default class Config {
   public getHost(): string {
     if (this.mode === "production") {
       return "0.0.0.0";
-    } 
+    }
     return "localhost";
   }
 
@@ -53,5 +57,13 @@ export default class Config {
 
   public getAllowedOrigin() : string {
     return this.allowedOrigin;
+  }
+
+  public getGameAddr() : string {
+    return this.gameAddr;
+  }
+
+  public getUmsAddr() : string {
+    return this.umsAddr;
   }
 };

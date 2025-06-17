@@ -54,7 +54,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
       await cache.deletePlayerMatch(result.userId.toString());
       await cache.deleteUserRating(result.userId);
     }
-    // await fetch('http://localhost:5050/ums/auth/internal/rating/update', {
+    // await fetch('http://localhost:5000/ums/auth/internal/rating/update', {
       
     // });
     return reply.code(200).send({ success: true, updated: updates.length });

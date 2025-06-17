@@ -9,6 +9,7 @@ import {
     evaluateMatchTimeout
 } from '../utils/MatchmakingUtils';
 import CacheStorage from "../../cache/CacheStorage";
+import Config from "../../../config/Config";
 
 export class MatchmakingService implements IMatchmaking {
     private queue: Player[] = []
@@ -99,7 +100,7 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 console.log("Match saved in database with id: ", matchId);
 
                 try {
-                    await fetch('http://localhost:5002/game/internal/match', {
+                    await fetch(`http://${Config.getInstance().getGameAddr()}/internal/match`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

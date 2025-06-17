@@ -1,3 +1,4 @@
+import Config from '../../../config/Config';
 import { TournamentService } from '../../../domain/tournament/services/TournamentService'
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator'
 import { createPlayer } from '../utils/createPlayer'
@@ -22,7 +23,7 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
 
                 let mmr = 1000;
                 try {
-                    const res = await fetch(`http://localhost:5050/auth/internal/user/${userId}`);
+                    const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/user/${userId}`);
                     const userInfo = await res.json() as {rating: number};
                     if (typeof userInfo.rating !== 'number') {
                         throw new Error('Invalid rating format');

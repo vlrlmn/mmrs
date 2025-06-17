@@ -1,3 +1,4 @@
+import Config from '../../../config/Config';
 import { MatchmakingService } from '../../../domain/matchmaking/services/MatchmakingService';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 import { createPlayer } from '../utils/createPlayer';
@@ -23,7 +24,7 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
 
         let mmr = 1000;
         try {
-          const res = await fetch(`http://localhost:5050/auth/internal/user/${userId}`);
+          const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/user/${userId}`);
           const userInfo = await res.json() as { rating: number };
           mmr = userInfo.rating;
         } catch (error) {
