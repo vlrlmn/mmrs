@@ -18,6 +18,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+COPY ./db/migrations /app/db/migrations
 
 RUN npm run build
 
