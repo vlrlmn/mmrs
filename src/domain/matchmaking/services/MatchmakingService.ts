@@ -113,8 +113,8 @@ async confirmMatch(playerId: string): Promise<boolean> {
                     });
                     this.storage.setMatchStatus(matchId, 'active');
                     console.log(`Game server notified: match ${matchId} created.`);
-                    await cache.savePlayerMatch(`playing-${match.player1.id}`, matchId.toString());
-                    await cache.savePlayerMatch(`playing-${match.player2.id}`, matchId.toString());
+                    await cache.savePlayerMatch(`${match.player1.id}`, matchId.toString());
+                    await cache.savePlayerMatch(`${match.player2.id}`, matchId.toString());
                 } catch (error) {
                     console.error(`Failed to notify game server about match ${matchId}:`, error);
                     this.storage.setMatchStatus(matchId, "failed");
