@@ -57,7 +57,8 @@ export class TournamentService implements ITournament {
 
         for (const player of this.tournamentPlayers.values()) {
             if (player.socket.readyState === 1) {
-                player.socket.send(message);
+                player.socket.send(JSON.stringify({ type: 'start_game', message: 'Tournament started!' }));
+                player.socket.close();
             }
         }
     }
@@ -82,5 +83,9 @@ export class TournamentService implements ITournament {
 
     public getPlayerIdBySocket(socket: any): string | undefined {
         return this.socketToPlayerId.get(socket);
+    }
+
+    public  getPlayerCount(): number {
+        return this.tournamentPlayers.size;
     }
 }
