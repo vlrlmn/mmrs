@@ -6,7 +6,6 @@ import { statsHandler } from './handlers/statsHandler'
 
 import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
-import { handleTournamentResults } from './handlers/handleTournamentResults'
 import { createOfflineMatchHandler } from './handlers/createOfflineMatchHandler'
 import { reconnectPlayerHandler } from './handlers/reconnectPlayerHandler'
 import { rateMatchHandler } from './handlers/rateMatchHandler'

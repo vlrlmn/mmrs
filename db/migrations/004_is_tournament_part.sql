@@ -1,0 +1,1 @@
+ALTER TABLE match ADD COLUMN is_tournament_part BOOLEAN DEFAULT 1;
