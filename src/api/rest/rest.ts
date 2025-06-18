@@ -3,12 +3,13 @@ import { IHandler } from '../../pkg/handler/handler'
 import { pingHandler } from './handlers/ping'
 import { rootHandler } from './handlers/root'
 import { statsHandler } from './handlers/statsHandler'
-import { rateMatchHandler } from './handlers/rateMatch'
+
 import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
 import { handleTournamentResults } from './handlers/handleTournamentResults'
 import { createOfflineMatchHandler } from './handlers/createOfflineMatchHandler'
 import { reconnectPlayerHandler } from './handlers/reconnectPlayerHandler'
+import { rateMatchHandler } from './handlers/rateMatchHandler'
 
 const routes: IHandler[] = [
   {

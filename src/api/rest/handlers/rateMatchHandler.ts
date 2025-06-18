@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import CacheStorage from '../../../domain/cache/CacheStorage';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
+import Config from '../../../config/Config';
 
 export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply) {
   try {
@@ -32,16 +33,13 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
         if (typeof result.userId !== 'number' || typeof result.place !== 'number') {
           return reply.code(400).send({ error: 'Invalid userId or place format' });
         }
-
         const currentRating = await cache.getUserRating(result.userId) as number;
-        let ratingChange = 0;
-
-        if (result.place === 1) {
-          ratingChange = 25;
-        } else {
-          ratingChange = (currentRating - 25 < 0) ? -currentRating : -25;
-        }
-        updates.push({ id: result.userId, rating: ratingChange });
+        console.log('RATING BEFORE: ', currentRating);
+        let newRating = result.place === 1
+          ? currentRating + 25
+          : Math.max(0, currentRating - 25);
+        console.log('RATING AFTER : ', newRating);
+        updates.push({ id: result.userId, rating: newRating });
       }
     } else if (results.length === 4) {
       for (const result of results) {
@@ -50,7 +48,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
         }
 
         const currentRating = await cache.getUserRating(result.userId) as number;
-        let ratingChange = 0;
+        let ratingChange = currentRating;
 
         switch (result.place) {
           case 1:
@@ -66,13 +64,12 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
           default:
             return reply.code(400).send({ error: 'Invalid place for tournament' });
         }
-
         updates.push({ id: result.userId, rating: ratingChange });
       }
     } else {
       return reply.code(400).send({ error: 'Unsupported match format' });
     }
-
+    console.log('RATING BEFORE CALL OF DB : ', updates);
     req.server.storage.updateRatingTransaction(matchId, updates);
     const winner = results.find(r => r.place === 1);
     if (winner) {
@@ -82,7 +79,23 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
       await cache.deletePlayerMatch(result.userId.toString());
       await cache.deleteUserRating(result.userId);
     }
-
+    try {
+      const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/rating/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+    
+      if (!res.ok) {
+        console.error('UMS rating update failed:', res.status, await res.text());
+      } else {
+        console.log('UMS rating update succeeded');
+      }
+    } catch (error) {
+      console.error('Failed to notify UMS about rating update:', error);
+    }    
     return reply.code(200).send({ success: true, updated: updates.length });
   } catch (error: any) {
     console.error(error);
