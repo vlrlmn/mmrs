@@ -54,9 +54,16 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
       await cache.deletePlayerMatch(result.userId.toString());
       await cache.deleteUserRating(result.userId);
     }
-    // await fetch('http://localhost:5000/ums/auth/internal/rating/update', {
-      
-    // });
+    // try {
+    //   const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/rating/update`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(updates)
+    //   });
+    // } catch (error) {
+    //   console.error('Invalid request:', error);
+    //   socket.send(JSON.stringify({ type: 'error', message: 'Invalid request' }));
+    // } 
     return reply.code(200).send({ success: true, updated: updates.length });
   } catch (error: any) {
     console.error(error);
