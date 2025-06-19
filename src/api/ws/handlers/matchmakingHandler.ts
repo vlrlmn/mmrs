@@ -30,6 +30,7 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
         } catch (error) {
           console.error('Invalid request:', error);
           socket.send(JSON.stringify({ type: 'error', message: 'Invalid request' }));
+          socket.close();
         } 
         const player = createPlayer(userId.toString(), mmr, socket);
         console.log(`(${userId}) joined searching for a match`);

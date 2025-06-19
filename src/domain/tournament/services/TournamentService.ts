@@ -15,8 +15,8 @@ export class TournamentService implements ITournament {
     async addPlayer(player: Player): Promise<boolean> {
         this.tournamentPlayers.set(player.id, player);
         this.socketToPlayerId.set(player.socket, player.id);
-        this.broadcastPlayersStatus();
-
+        // this.broadcastPlayersStatus();
+        console.log('Players size: ', this.tournamentPlayers.size);
         if (this.tournamentPlayers.size === 4) {
             const matchId = this.storage.addMatch(2);
             for (const player of this.tournamentPlayers.values()) {
