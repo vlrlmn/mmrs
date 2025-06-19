@@ -18,8 +18,7 @@ export class TournamentService implements ITournament {
         const res = await fetch(`http://${Config.getInstance().getGameAddr()}/internal/match`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: matchId, 
-            players: [] })
+          body: JSON.stringify({ id: matchId, players})
         });
         console.log('Notify game server', res);
         return res;
