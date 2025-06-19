@@ -11,3 +11,4 @@ export function tournamentCloseHandler(socket: any, tournament: TournamentServic
         }
     }
 }
+

@@ -37,7 +37,7 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         console.log(`(${id}) joined tournament ${tid} with MMR ${mmr}`);
 
         const added = await tournament.addPlayer(player);
-        console.log(`(${id}) player added ${tid} in added. MMR: ${mmr}`);
+        console.log(`(${id}) player added ${tid} in pool. MMR: ${mmr}`);
         if (!added) {
           socket.send(JSON.stringify({ type: 'error', message: 'Tournament already in progress' }));
           socket.close();
