@@ -15,10 +15,10 @@ export class TournamentService implements ITournament {
     async addPlayer(player: Player): Promise<boolean> {
         this.tournamentPlayers.set(player.id, player);
         this.socketToPlayerId.set(player.socket, player.id);
-        // this.broadcastPlayersStatus();
+        this.broadcastPlayersStatus();
         console.log('Players size: ', this.tournamentPlayers.size);
         if (this.tournamentPlayers.size === 4) {
-            const matchId = this.storage.addMatch(2);
+            const matchId = this.storage.addMatch(2, true);
             for (const player of this.tournamentPlayers.values()) {
                 this.storage.addParticipant(matchId, parseInt(player.id));
             }
@@ -50,15 +50,15 @@ export class TournamentService implements ITournament {
     private broadcastPlayersStatus(): void {
         const count = this.tournamentPlayers.size;
         const message =  JSON.stringify ({
-            message: 'tournamnet_lobby_counter',
+            message: 'lobby_status',
             current: count,
             total: 4
         });
 
         for (const player of this.tournamentPlayers.values()) {
             if (player.socket.readyState === 1) {
-                player.socket.send(JSON.stringify({ type: 'start_game', message: 'Tournament started!' }));
-                player.socket.close();
+                player.socket.send(message);
+                // player.socket.close();
             }
         }
     }

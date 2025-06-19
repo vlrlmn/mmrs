@@ -88,7 +88,7 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 this.pendingMatches = this.pendingMatches.filter(m => m !== match);
                 this.activeMatches.set(match.player1.id, match);
                 this.activeMatches.set(match.player2.id, match);
-                const matchId = this.storage.addMatch(1);
+                const matchId = this.storage.addMatch(1, false);
                 
                 this.storage.addParticipant(matchId, parseInt(match.player1.id));
                 this.storage.addParticipant(matchId, parseInt(match.player2.id));

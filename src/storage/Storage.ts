@@ -98,12 +98,12 @@ export class Storage implements IStorage {
         stmt.run(matchId, userId);
     }
 
-    public addMatch(mode: number): number {
+    public addMatch(mode: number, isTournament: boolean): number {
         const stmt = this.db.prepare(`
-            INSERT INTO match (mode)
-            VALUES (?);
+            INSERT INTO match (mode, is_tournament_part)
+            VALUES (?, ?);
         `);
-        const result = stmt.run(mode);
+        const result = stmt.run(mode, isTournament ? 1 : 0);
         return result.lastInsertRowid as number; 
     }
 
