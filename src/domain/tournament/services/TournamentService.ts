@@ -46,7 +46,8 @@ export class TournamentService implements ITournament {
             const players = Array.from(this.tournamentPlayers.values()).sort((a, b) => parseInt(a.id) - parseInt(b.id));
             const match1 = this.storage.addMatch(2, true);
             const match2 = this.storage.addMatch(2, true);
-
+            TournamentManager.register(match1, this);
+            TournamentManager.register(match2, this);
             const [p1, p2, p3, p4] = players;
             console.log('Created players', p1, p2, p3, p4);
             this.storage.addParticipant(match1, parseInt(p1.id));
