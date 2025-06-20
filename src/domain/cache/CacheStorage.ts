@@ -22,7 +22,7 @@ export default class CacheStorage {
 		return CacheStorage.instance;
 	}
 
-	public async saveUserRating(userId: number, rating: number, ttl: number = 3600): Promise<void> {
+	public async saveUserRating(userId: number, rating: number): Promise<void> {
 		try {
 			const key = `mmr:${userId}`;
 			let keyExists = false;
@@ -36,7 +36,7 @@ export default class CacheStorage {
 			if (keyExists) {
 				await this.radishClient.delete(key);
 			}
-			const response = await this.radishClient.set(`mmr:${userId}`, rating.toString(), ttl);
+			const response = await this.radishClient.set(`mmr:${userId}`, rating.toString());
 			if (!response || typeof response.status !== 'number') {
 				throw new Error('Invalid response from Radish');
 			}
@@ -76,10 +76,10 @@ export default class CacheStorage {
 		}
 	}
 
-	public async savePlayerMatch(playerId: string, matchId: string, ttl: number = 3600): Promise<void> {
+	public async savePlayerMatch(playerId: string, matchId: string): Promise<void> {
 	try {
 		const key = `playing-${playerId}`;
-		const response = await this.radishClient.set(key, matchId, ttl);
+		const response = await this.radishClient.set(key, matchId);
 		if (!response || typeof response.status !== 'number' || response.status !== 201) {
 			throw CacheSetError;
 		}
