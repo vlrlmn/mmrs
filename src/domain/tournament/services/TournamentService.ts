@@ -223,8 +223,8 @@ export class TournamentService implements ITournament {
                     console.warn(`Socket for player ${w1} not ready to send final match notification`);
                 }
 
-                if (player1?.socket?.readyState === 1) {
-                    player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+                if (player2?.socket?.readyState === 1) {
+                    player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                 } else {
                     console.warn(`Socket for player ${w1} not ready to send final match notification`);
                 }
