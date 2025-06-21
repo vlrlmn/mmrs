@@ -77,8 +77,6 @@ export class TournamentService implements ITournament {
                 console.log('savePlayerMatch, player sent');
                 this.semifinalMatchIds = [Number(match1), Number(match2)];
                 console.log('Match ids: ', match1, match2);
-
-
             } catch (error) {
                 console.error(`Failed to notify game server about match ${match1}:`, error);
                 console.error(`Failed to notify game server about match ${match2}:`, error);
@@ -100,13 +98,17 @@ export class TournamentService implements ITournament {
                     type: 'match_failed',
                     reason: 'Game server did not respond'
                 }));
-                console.log('Err!');
                 return false;
             }
             p1.socket.send(JSON.stringify({ type: 'match_ready', matchId: match1 }));
             p2.socket.send(JSON.stringify({ type: 'match_ready', matchId: match1 }));
             p3.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
             p4.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
+
+            p1.socket.close();
+            p2.socket.close();
+            p3.socket.close();
+            p4.socket.close();
             console.log('Added player, sent match ready');
             return true;
         }

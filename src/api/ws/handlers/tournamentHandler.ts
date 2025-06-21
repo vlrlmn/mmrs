@@ -20,6 +20,13 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         const userId = payload.userId;
         id = userId.toString();
 
+        if (tournament.hasPlayer(id)) {
+          tournament.updatePlayerSocket(id, socket);
+          console.log(`(${id}) reconnected to tournament ${tid}`);
+          socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
+          return;
+        }
+        
         let mmr = 1000;
         try {
           const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/user/${userId}`);
@@ -36,12 +43,6 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         const player = createPlayer(id, mmr, socket);
         console.log(`(${id}) joined tournament ${tid} with MMR ${mmr}`);
 
-        // if (tournament.hasPlayer(id)) {
-        //   tournament.updatePlayerSocket(id, socket);
-        //   console.log(`(${id}) reconnected to tournament ${tid}`);
-        //   socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
-        //   return;
-        // }
         const added = await tournament.addPlayer(player);
         console.log(`(${id}) player added ${tid} in pool. MMR: ${mmr}`);
         if (!added) {
