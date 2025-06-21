@@ -69,14 +69,17 @@ export class TournamentService implements ITournament {
                 
                 console.log(await res1.text());
                 console.log(await res2.text());
-
-                cache.savePlayerMatch(p1.id, match1.toString());
-                cache.savePlayerMatch(p2.id, match1.toString());
-                cache.savePlayerMatch(p3.id, match2.toString());
-                cache.savePlayerMatch(p4.id, match2.toString());
-                console.log('savePlayerMatch, player sent');
-                this.semifinalMatchIds = [Number(match1), Number(match2)];
-                console.log('Match ids: ', match1, match2);
+                try {
+                    await cache.savePlayerMatch(p1.id, match1.toString());
+                    await cache.savePlayerMatch(p2.id, match1.toString());
+                    await cache.savePlayerMatch(p3.id, match2.toString());
+                    await cache.savePlayerMatch(p4.id, match2.toString());
+                    console.log('savePlayerMatch, player sent');
+                    this.semifinalMatchIds = [Number(match1), Number(match2)];
+                    console.log('Match ids: ', match1, match2);
+                } catch(error) {
+                    console.log('Not cached!!!');
+                }
             } catch (error) {
                 console.error(`Failed to notify game server about match ${match1}:`, error);
                 console.error(`Failed to notify game server about match ${match2}:`, error);
@@ -163,11 +166,17 @@ export class TournamentService implements ITournament {
 
     public async handleMatchResult(matchId: number, results: { userId: number; place: number }[]) {
         console.log(`[handleMatchResult] Called for match ${matchId}`);
-        console.log(`[handleMatchResult] Results:`, results);
         console.log(`typeof matchId:`, typeof matchId);
         console.log(`typeof semifinalMatchIds[0]:`, typeof this.semifinalMatchIds[0]);
+        results = results
+        .map(r => ({
+            ...r,
+            place: r.place === 0 ? 2 : r.place
+        }))
+        .sort((a, b) => a.place - b.place); 
         const winner = results.find(r => r.place === 1);
         const loser = results.find(r => r.place === 2);
+        console.log(`[handleMatchResult] Results:`, results);
         
         if (!winner || !loser) {
             console.log(`Invalid tournament match results for match ${matchId}`);
@@ -195,6 +204,7 @@ export class TournamentService implements ITournament {
                 TournamentManager.register(finalMatchId, this);
                 await cache.saveUserRating(w1, this.tournamentPlayers.get(w1.toString())?.mmr || 1000);
                 await cache.saveUserRating(w2, this.tournamentPlayers.get(w2.toString())?.mmr || 1000);
+                
                 await cache.savePlayerMatch(w1.toString(), finalMatchId.toString());
                 await cache.savePlayerMatch(w2.toString(), finalMatchId.toString());
 
