@@ -112,10 +112,10 @@ export class TournamentService implements ITournament {
             p3.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
             p4.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
 
-            p1.socket.close();
-            p2.socket.close();
-            p3.socket.close();
-            p4.socket.close();
+            // p1.socket.close();
+            // p2.socket.close();
+            // p3.socket.close();
+            // p4.socket.close();
             console.log('Added player, sent match ready');
             return true;
         }
@@ -223,18 +223,36 @@ export class TournamentService implements ITournament {
                 console.log(`Final match started: with ${w1} and ${w2}`);
                 const player1 = this.tournamentPlayers.get(w1.toString());
                 const player2 = this.tournamentPlayers.get(w2.toString());
+                
+                console.log(`Waiting for ${w1} to reconnect...`);
+                const ok1 = await this.waitForReconnect(w1.toString(), 10000);
+                console.log(`Reconnect for ${w1}: ${ok1}`);
 
-                if (player1?.socket?.readyState === 1) {
+                console.log(`Waiting for ${w2} to reconnect...`);
+                const ok2 = await this.waitForReconnect(w2.toString(), 10000);
+                console.log(`Reconnect for ${w2}: ${ok2}`);
+                if (ok1 && player1?.socket?.readyState === 1) {
                     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                 } else {
-                    console.warn(`Socket for player ${w1} not ready to send final match notification`);
+                    console.warn(`Player ${w1} did not reconnect in time`);
                 }
-
-                if (player2?.socket?.readyState === 1) {
+                if (ok2 && player2?.socket?.readyState === 1) {
                     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                 } else {
-                    console.warn(`Socket for player ${w2} not ready to send final match notification`);
+                    console.warn(`Player ${w2} did not reconnect in time`);
                 }
+
+                // if (player1?.socket?.readyState === 1) {
+                //     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+                // } else {
+                //     console.warn(`Socket for player ${w1} not ready to send final match notification`);
+                // }
+
+                // if (player2?.socket?.readyState === 1) {
+                //     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+                // } else {
+                //     console.warn(`Socket for player ${w2} not ready to send final match notification`);
+                // }
                 return;
             }
         } else if (this.finalMatchId && matchId === this.finalMatchId) {
@@ -262,17 +280,84 @@ export class TournamentService implements ITournament {
         return this.tournamentPlayers.has(id);
     }
 
-    public updatePlayerSocket(id: string, socket: any): void {
-        const player = this.tournamentPlayers.get(id);
+    public waitForReconnect = async (userId: string, timeout = 10000): Promise<boolean> => {
+        return new Promise(resolve => {
+            const interval = setInterval(() => {
+            if (this.hasPlayer(userId)) {
+                console.log('Has player ', userId);
+                const player = this.tournamentPlayers.get(userId);
+                if (player?.socket?.readyState === 1) {
+                clearInterval(interval);
+                resolve(true);
+                }
+            }
+            }, 1000);
+
+            setTimeout(() => {
+            clearInterval(interval);
+            resolve(false);
+            }, timeout);
+        });
+        };
+
+    // public updatePlayerSocket(id: string, socket: any): void {
+    //     const player = this.tournamentPlayers.get(id);
+    //     if (player) {
+    //         console.log(`Updating socket for player ${id}`);
+    //         console.log('Old socket listeners:', player.socket.listenerCount('error'));
+    //         player.socket.removeAllListeners();
+    //         player.socket = socket;
+    //         socket.on('error', (err: any) => console.error('Socket error:', err));
+            
+    //         console.log('New socket listeners:', socket.listenerCount('error'));
+    //         this.socketToPlayerId.set(socket, id);
+    //     }
+    //     if (this.isFinalMatchCreated && this.finalMatchId !== null) {
+    //     const userId = parseInt(id, 10);
+    //     if (this.semifinalWinners.includes(userId)) {
+    //         console.log(`Player ${id} reconnected during final match — sending match_ready`);
+    //         socket.send(JSON.stringify({ type: 'match_ready', matchId: this.finalMatchId }));
+    //     }
+    // }
+    // }
+    public async updatePlayerSocket(id: string, socket: any): Promise<void> {
+        const cache = CacheStorage.getInstance();
+        let player = this.tournamentPlayers.get(id);
+
         if (player) {
             console.log(`Updating socket for player ${id}`);
-            console.log('Old socket listeners:', player.socket.listenerCount('error'));
             player.socket.removeAllListeners();
             player.socket = socket;
             socket.on('error', (err: any) => console.error('Socket error:', err));
-            
-            console.log('New socket listeners:', socket.listenerCount('error'));
-            this.socketToPlayerId.set(socket, id);
+        } else {
+            // 👇 Получаем MMR из кэша
+            let mmr: number = 1000;
+            try {
+                const cached = await cache.getUserRating(parseInt(id));
+                if (cached !== null) {
+                    mmr = cached;
+                } else {
+                    console.warn(`MMR not found in cache for player ${id}, using default`);
+                }
+            } catch (err) {
+                console.error(`Failed to get MMR for player ${id}:`, err);
+            }
+
+            player = { id, mmr, socket, joinedAt: Date.now() };
+            this.tournamentPlayers.set(id, player);
+            console.log(`Re-added player ${id} to tournamentPlayers`);
+        }
+
+        this.socketToPlayerId.set(socket, id);
+        socket.on('error', (err: any) => console.error('Socket error:', err));
+
+        if (this.isFinalMatchCreated && this.finalMatchId !== null) {
+            const userId = parseInt(id, 10);
+            if (this.semifinalWinners.includes(userId)) {
+                console.log(`Player ${id} reconnected during final match — sending match_ready`);
+                socket.send(JSON.stringify({ type: 'match_ready', matchId: this.finalMatchId }));
+            }
         }
     }
+
 }
