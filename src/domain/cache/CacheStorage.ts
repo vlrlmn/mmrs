@@ -77,17 +77,24 @@ export default class CacheStorage {
 	}
 
 	public async savePlayerMatch(playerId: string, matchId: string): Promise<void> {
-	try {
 		const key = `playing-${playerId}`;
-		const response = await this.radishClient.set(key, matchId);
-		if (!response || typeof response.status !== 'number' || response.status !== 201) {
+
+		try {
+			const existing = await this.radishClient.get(key);
+			if (existing && existing.status === 200) {
+				await this.radishClient.delete(key);
+				console.log(`Deleted existing key for player ${playerId}`);
+			}
+			const response = await this.radishClient.set(key, matchId);
+			if (!response || typeof response.status !== 'number' || response.status !== 201) {
+				throw CacheSetError;
+			}
+		} catch (error) {
+			console.error(`CacheStorage error: failed to save player match ${playerId}`, error);
 			throw CacheSetError;
 		}
-	} catch (error) {
-		console.error(`CacheStorage error: failed to save player match ${playerId}`, error);
-		throw CacheSetError;
-		}
 	}
+
 
 	public async getPlayerMatch(playerId: string): Promise<string | undefined> {
 		try {
