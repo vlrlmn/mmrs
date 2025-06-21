@@ -202,12 +202,15 @@ export class TournamentService implements ITournament {
                 this.storage.addParticipant(finalMatchId, w1);
                 this.storage.addParticipant(finalMatchId, w2);
                 TournamentManager.register(finalMatchId, this);
+                try {
                 await cache.saveUserRating(w1, this.tournamentPlayers.get(w1.toString())?.mmr || 1000);
                 await cache.saveUserRating(w2, this.tournamentPlayers.get(w2.toString())?.mmr || 1000);
                 
                 await cache.savePlayerMatch(w1.toString(), finalMatchId.toString());
                 await cache.savePlayerMatch(w2.toString(), finalMatchId.toString());
-
+                } catch(error) {
+                    console.error('Cache savePlayerMatch failed:', error);
+                }
                 console.log(`Sending final match creation to game server: ${finalMatchId}, players: [${w1}, ${w2}]`);
                 const res = await this.notifyGameServer(finalMatchId, [w1, w2]);
                 console.log(`Final match started: with ${w1} and ${w2}`);
@@ -216,11 +219,15 @@ export class TournamentService implements ITournament {
 
                 if (player1?.socket?.readyState === 1) {
                     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
-                }
-                if (player2?.socket?.readyState === 1) {
-                    player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+                } else {
+                    console.warn(`Socket for player ${w1} not ready to send final match notification`);
                 }
 
+                if (player1?.socket?.readyState === 1) {
+                    player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+                } else {
+                    console.warn(`Socket for player ${w1} not ready to send final match notification`);
+                }
                 return;
             }
 
@@ -252,10 +259,14 @@ export class TournamentService implements ITournament {
     public updatePlayerSocket(id: string, socket: any): void {
         const player = this.tournamentPlayers.get(id);
         if (player) {
-            this.socketToPlayerId.delete(player.socket);
+            console.log(`Updating socket for player ${id}`);
+            console.log('Old socket listeners:', player.socket.listenerCount('error'));
+            player.socket.removeAllListeners();
             player.socket = socket;
+            socket.on('error', (err: any) => console.error('Socket error:', err));
+            
+            console.log('New socket listeners:', socket.listenerCount('error'));
             this.socketToPlayerId.set(socket, id);
-            console.log(`Updated socket for player ${id}`);
         }
     }
 }

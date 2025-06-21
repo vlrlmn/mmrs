@@ -33,5 +33,11 @@ export async function registerTournamentRoute(app: FastifyInstance) {
 
     socket.on('message', tournamentHandler(socket, tournament, id));
     socket.on('close', tournamentCloseHandler(socket, tournament, id));
+    console.log(`Socket listeners count before adding error listener:`, socket.listenerCount('error'));
+    socket.on('error', (err: any) => {
+      console.error('Socket error:', err);
+    });
+    console.log(`Socket listeners count after adding error listener:`, socket.listenerCount('error'));
+
   });
 }
