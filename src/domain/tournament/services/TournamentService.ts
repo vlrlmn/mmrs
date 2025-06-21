@@ -27,9 +27,9 @@ export class TournamentService implements ITournament {
         const res = await fetch(`http://${Config.getInstance().getGameAddr()}/internal/match`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: matchId, players})
+          body: JSON.stringify({ id: matchId, players, mode: 2})
         });
-        console.log('Notify game server', res);
+        console.log('Notify game server');
         return res;
     }
 
@@ -72,14 +72,18 @@ export class TournamentService implements ITournament {
                 try {
                     await cache.savePlayerMatch(p1.id, match1.toString());
                     await cache.savePlayerMatch(p2.id, match1.toString());
+                } catch(error) {
+                    console.log('Not cached! savePlayerMatch: ', error);
+                }
+                try {
                     await cache.savePlayerMatch(p3.id, match2.toString());
                     await cache.savePlayerMatch(p4.id, match2.toString());
+                } catch(error) {
+                    console.log('Not cached! savePlayerMatch: ', error);
+                }
                     console.log('savePlayerMatch, player sent');
                     this.semifinalMatchIds = [Number(match1), Number(match2)];
                     console.log('Match ids: ', match1, match2);
-                } catch(error) {
-                    console.log('Not cached!!!');
-                }
             } catch (error) {
                 console.error(`Failed to notify game server about match ${match1}:`, error);
                 console.error(`Failed to notify game server about match ${match2}:`, error);
@@ -203,11 +207,14 @@ export class TournamentService implements ITournament {
                 this.storage.addParticipant(finalMatchId, w2);
                 TournamentManager.register(finalMatchId, this);
                 try {
-                await cache.saveUserRating(w1, this.tournamentPlayers.get(w1.toString())?.mmr || 1000);
-                await cache.saveUserRating(w2, this.tournamentPlayers.get(w2.toString())?.mmr || 1000);
-                
-                await cache.savePlayerMatch(w1.toString(), finalMatchId.toString());
-                await cache.savePlayerMatch(w2.toString(), finalMatchId.toString());
+                    await cache.saveUserRating(w1, this.tournamentPlayers.get(w1.toString())?.mmr || 1000);
+                    await cache.saveUserRating(w2, this.tournamentPlayers.get(w2.toString())?.mmr || 1000);
+                } catch(error) {
+                    console.error('Cache saveUserRating failed:', error);
+                }
+                try {
+                    await cache.savePlayerMatch(w1.toString(), finalMatchId.toString());
+                    await cache.savePlayerMatch(w2.toString(), finalMatchId.toString());
                 } catch(error) {
                     console.error('Cache savePlayerMatch failed:', error);
                 }
@@ -226,11 +233,10 @@ export class TournamentService implements ITournament {
                 if (player2?.socket?.readyState === 1) {
                     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                 } else {
-                    console.warn(`Socket for player ${w1} not ready to send final match notification`);
+                    console.warn(`Socket for player ${w2} not ready to send final match notification`);
                 }
                 return;
             }
-
         } else if (this.finalMatchId && matchId === this.finalMatchId) {
             console.log('Final match completed');
 

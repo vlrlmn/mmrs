@@ -26,7 +26,6 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
           socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
           return;
         }
-        
         let mmr = 1000;
         try {
           const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/user/${userId}`);

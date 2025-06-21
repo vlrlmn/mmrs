@@ -108,7 +108,8 @@ async confirmMatch(playerId: string): Promise<boolean> {
                             players: [
                                 parseInt(match.player1.id),
                                 parseInt(match.player2.id)
-                            ]
+                            ],
+                            mode: 1
                         })
                     });
                     this.storage.setMatchStatus(matchId, 'active');
