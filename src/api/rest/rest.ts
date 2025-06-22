@@ -27,6 +27,11 @@ const routes: IHandler[] = [
     handler: statsHandler
   },
   {
+    method: 'GET',
+    route: '/mmrs/api/rest/stats/:userId',
+    handler: statsHandler
+  },
+  {
     method: 'POST',
     route: '/mmrs/internal/match/:matchId/rate',
     handler: rateMatchHandler

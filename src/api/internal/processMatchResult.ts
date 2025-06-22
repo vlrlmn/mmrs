@@ -1,6 +1,6 @@
 import Config from "../../config/Config";
 import CacheStorage from "../../domain/cache/CacheStorage";
-
+import { Storage } from "../../storage/Storage";
 export async function processMatchResult(  
     matchId: number,
     status: number,

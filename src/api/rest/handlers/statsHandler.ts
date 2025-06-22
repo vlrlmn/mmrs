@@ -14,8 +14,12 @@ export async function statsHandler(request: FastifyRequest, reply: FastifyReply)
       return reply.code(400).send({ error: 'Invalid page number' });
     }
 
+    const userIdParam = (request.params as any).userId;
+    const userId = userIdParam && !isNaN(parseInt(userIdParam)) ? 
+      parseInt(userIdParam) : payload.userId;
+
     const storage = request.server.storage;
-    const matches = storage.getMatchesForUser(payload.userId, page);
+    const matches = storage.getMatchesForUser(userId, page);
 
     if (!matches || matches.length === 0) {
       return reply.code(204).send();

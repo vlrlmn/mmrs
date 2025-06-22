@@ -216,14 +216,14 @@ export class TournamentService implements ITournament {
                 const res = await this.notifyGameServer(finalMatchId, [w1, w2]);
                 if (!res)
                     console.log(`Game server not notified`);
-                console.log(`Final match started: with ${w1} and ${w2}`);
-                const player1 = this.tournamentPlayers.get(w1.toString());
-                const player2 = this.tournamentPlayers.get(w2.toString());
                 
                 console.log(`Waiting for ${w1} to reconnect...`);
                 const ok1 = await this.waitForReconnect(w1.toString(), 10000);
                 const ok2 = await this.waitForReconnect(w2.toString(), 10000);
-
+                
+                console.log(`Final match started: with ${w1} and ${w2}`);
+                const player1 = this.tournamentPlayers.get(w1.toString());
+                const player2 = this.tournamentPlayers.get(w2.toString());
                 if (ok1 && ok2 && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
                     console.log(`Both players reconnected, sending match_ready`);
                     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
@@ -267,8 +267,8 @@ export class TournamentService implements ITournament {
                 console.log('Has player ', userId);
                 const player = this.tournamentPlayers.get(userId);
                 if (player?.socket?.readyState === 1) {
-                clearInterval(interval);
-                resolve(true);
+                    clearInterval(interval);
+                    resolve(true);
                 }
             }
             }, 1000);
