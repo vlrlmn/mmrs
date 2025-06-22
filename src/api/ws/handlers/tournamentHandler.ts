@@ -23,7 +23,7 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         if (tournament.hasPlayer(id)) {
           tournament.updatePlayerSocket(id, socket);
           console.log(`(${id}) reconnected to tournament ${tid}`);
-          socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
+          // socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
           return;
         }
         let mmr = 1000;

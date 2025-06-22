@@ -49,7 +49,7 @@ export class TournamentService implements ITournament {
             TournamentManager.register(match1, this);
             TournamentManager.register(match2, this);
             const [p1, p2, p3, p4] = players;
-            console.log('Created players', p1, p2, p3, p4);
+            console.log('Created players', p1.id, p2.id, p3.id, p4.id);
             this.storage.addParticipant(match1, parseInt(p1.id));
             this.storage.addParticipant(match1, parseInt(p2.id));
             this.storage.addParticipant(match2, parseInt(p3.id));
@@ -81,9 +81,9 @@ export class TournamentService implements ITournament {
                 } catch(error) {
                     console.log('Not cached! savePlayerMatch: ', error);
                 }
-                    console.log('savePlayerMatch, player sent');
-                    this.semifinalMatchIds = [Number(match1), Number(match2)];
-                    console.log('Match ids: ', match1, match2);
+                console.log('savePlayerMatch, player sent');
+                this.semifinalMatchIds = [Number(match1), Number(match2)];
+                console.log('Match ids: ', match1, match2);
             } catch (error) {
                 console.error(`Failed to notify game server about match ${match1}:`, error);
                 console.error(`Failed to notify game server about match ${match2}:`, error);
@@ -112,10 +112,10 @@ export class TournamentService implements ITournament {
             p3.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
             p4.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
 
-            // p1.socket.close();
-            // p2.socket.close();
-            // p3.socket.close();
-            // p4.socket.close();
+            p1.socket.close();
+            p2.socket.close();
+            p3.socket.close();
+            p4.socket.close();
             console.log('Added player, sent match ready');
             return true;
         }
@@ -146,7 +146,7 @@ export class TournamentService implements ITournament {
 
             this.tournamentPlayers.delete(playerId);
             console.log(`Removed player ${playerId} from tournament`);
-            this.broadcastPlayersStatus();
+            // this.broadcastPlayersStatus();
         }
 
        if (this.tournamentPlayers.size === 0) {
@@ -173,13 +173,13 @@ export class TournamentService implements ITournament {
         console.log(`typeof matchId:`, typeof matchId);
         console.log(`typeof semifinalMatchIds[0]:`, typeof this.semifinalMatchIds[0]);
         results = results
-        .map(r => ({
-            ...r,
-            place: r.place === 0 ? 2 : r.place
-        }))
-        .sort((a, b) => a.place - b.place); 
-        const winner = results.find(r => r.place === 1);
-        const loser = results.find(r => r.place === 2);
+        // .map(r => ({
+        //     ...r,
+        //     place: r.place === 0 ? 2 : r.place
+        // }))
+        // .sort((a, b) => a.place - b.place); 
+        const winner = results.find(r => r.place === 0);
+        const loser = results.find(r => r.place === 1);
         console.log(`[handleMatchResult] Results:`, results);
         
         if (!winner || !loser) {
@@ -220,6 +220,7 @@ export class TournamentService implements ITournament {
                 }
                 console.log(`Sending final match creation to game server: ${finalMatchId}, players: [${w1}, ${w2}]`);
                 const res = await this.notifyGameServer(finalMatchId, [w1, w2]);
+
                 console.log(`Final match started: with ${w1} and ${w2}`);
                 const player1 = this.tournamentPlayers.get(w1.toString());
                 const player2 = this.tournamentPlayers.get(w2.toString());
