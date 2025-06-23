@@ -3,7 +3,7 @@ import { updateRatings } from './utils/updateRatings';
 import { updateUMS } from './utils/updateUMS';
 import { parseMatchId, validatePayload } from './utils/helpers';
 import { TournamentManager } from '../../../domain/tournament/TournamentManager';
-
+import { TournamentService } from '../../../domain/tournament/services/TournamentService';
 export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply) {
   try {
     const matchId = parseMatchId(req, reply);
@@ -19,6 +19,8 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 
     if (status === 2) {
       return reply.code(200).send({ message: 'Match failed, no MMR changes made' });
+      // storage.setMatchStatus(matchId, "failed");
+      // change status == 'failed + remove caching
     }
 
     if (TournamentManager.has(matchId)) {

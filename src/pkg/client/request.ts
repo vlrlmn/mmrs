@@ -20,22 +20,23 @@ export default class RadishRequest {
 
     send(conn: net.Socket) : Promise<string> {
         return new Promise<string>((resolve, reject) => {
-			conn.write(this.toJSON() + '\n', (err) => {
-				if (err) {
-					return reject(err);
-				}
-			});
-
-			conn.once('data', (data) => {
-				resolve(data.toString());
-			});
-
-			conn.once('error', (err) => {
-				reject(err);
-			});
-		});
+            conn.write(this.toJSON() + '\n', (err) => {                
+                if (err) {
+                    return reject(err);                
+                }
+            });
+            const dataHandler = (data: Buffer) => {                
+                conn.removeListener('error', errorHandler);
+                resolve(data.toString());            
+            };
+            const errorHandler = (err: Error) => {
+                conn.removeListener('data', dataHandler);                
+                reject(err);
+            };
+            conn.once('data', dataHandler);
+            conn.once('error', errorHandler);        
+        });
     }
-
     static request(type: RequestType, data: Record<string, any>) {
         return new RadishRequest(type, data);
     }

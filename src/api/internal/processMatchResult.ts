@@ -18,14 +18,14 @@ export async function processMatchResult(
         let newRating = currentRating;
 
         switch (result.place) {
-        case 1:
+        case 0:
             newRating += 25;
             break;
-        case 2:
+        case 1:
             newRating += 12;
             break;
+        case 2:
         case 3:
-        case 4:
             newRating = Math.max(0, currentRating - 12);
             break;
         default:

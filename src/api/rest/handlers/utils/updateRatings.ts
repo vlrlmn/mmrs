@@ -18,15 +18,15 @@ export async function updateRatings(
     let newRating = currentRating;
 
     if (results.length === 2) {
-      newRating = result.place === 1
+      newRating = result.place === 0
         ? currentRating + 25
         : Math.max(0, currentRating - 25);
     } else if (results.length === 4) {
       switch (result.place) {
-        case 1: newRating = 25; break;
-        case 2: newRating = 12; break;
-        case 3:
-        case 4: newRating = (currentRating - 12 < 0) ? -currentRating : -12; break;
+        case 0: newRating = 25; break;
+        case 1: newRating = 12; break;
+        case 2:
+        case 3: newRating = (currentRating - 12 < 0) ? -currentRating : -12; break;
         default: throw new Error('Invalid place for tournament');
       }
     } else {
@@ -37,7 +37,7 @@ export async function updateRatings(
   }
 
   req.server.storage.updateRatingTransaction(matchId, updates);
-  const winner = results.find(r => r.place === 1);
+  const winner = results.find(r => r.place === 0);
   if (winner) {
     req.server.storage.updateMatchWinner(matchId, winner.userId);
   }

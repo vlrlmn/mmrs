@@ -14,13 +14,6 @@ export interface PendingMatch {
     createdAt: number
 }
 
-export type TournamentStage =
-    'registration'
-    | 'semi' 
-    | 'quarter' 
-    | 'final'
-    | 'complete';
-
 export interface Match {
     id: number;
     startedAt: string;

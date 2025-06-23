@@ -1,5 +1,5 @@
 import { ITournament } from "../ITournament";
-import { Player, TournamentStage } from "../../matchmaking/types";
+import { Player } from "../../matchmaking/types";
 import { IStorage } from '../../../storage/IStorage';
 import CacheStorage from "../../cache/CacheStorage";
 import Config from "../../../config/Config";
@@ -29,11 +29,11 @@ export class TournamentService implements ITournament {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: matchId, players, mode: 2})
         });
+        this.storage.setMatchStatus(matchId, "active");
         console.log('Notify game server');
         return res;
     }
 
-      
     async addPlayer(player: Player): Promise<boolean> {
         console.log('before set');
         this.tournamentPlayers.set(player.id, player);
@@ -105,6 +105,10 @@ export class TournamentService implements ITournament {
                     type: 'match_failed',
                     reason: 'Game server did not respond'
                 }));
+                p1.socket.close();
+                p2.socket.close();
+                p3.socket.close();
+                p4.socket.close();
                 return false;
             }
             p1.socket.send(JSON.stringify({ type: 'match_ready', matchId: match1 }));
@@ -213,26 +217,47 @@ export class TournamentService implements ITournament {
                     console.error('Cache savePlayerMatch failed:', error);
                 }
                 console.log(`Sending final match creation to game server: ${finalMatchId}, players: [${w1}, ${w2}]`);
-                const res = await this.notifyGameServer(finalMatchId, [w1, w2]);
-                if (!res)
-                    console.log(`Game server not notified`);
-                
+                try {
+                    await this.notifyGameServer(finalMatchId, [w1, w2]);
+                } catch (error) {
+                    this.storage.setMatchStatus(finalMatchId, "failed");
+                    await cache.deletePlayerMatch(w1.toString());
+                    await cache.deleteUserRating(w1);
+                    await cache.deletePlayerMatch(w2.toString());
+                    await cache.deleteUserRating(w2); 
+                }
                 console.log(`Waiting for ${w1} to reconnect...`);
-                const ok1 = await this.waitForReconnect(w1.toString(), 10000);
-                const ok2 = await this.waitForReconnect(w2.toString(), 10000);
-                
+                // const ok1 = await this.waitForReconnect(w1.toString(), 10000);
+                // const ok2 = await this.waitForReconnect(w2.toString(), 10000);
+                const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
+
                 console.log(`Final match started: with ${w1} and ${w2}`);
                 const player1 = this.tournamentPlayers.get(w1.toString());
                 const player2 = this.tournamentPlayers.get(w2.toString());
-                if (ok1 && ok2 && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
+                if (reconnected && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
                     console.log(`Both players reconnected, sending match_ready`);
                     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
                 } else {
                     console.warn(`Not all players reconnected in time`);
-                    if (!ok1) console.warn(`Player ${w1} did not reconnect`);
-                    if (!ok2) console.warn(`Player ${w2} did not reconnect`);
+                    if (!reconnected) console.warn(`Player ${w1} did not reconnect`);
+                    this.storage.setMatchStatus(finalMatchId, "failed");
+                    await cache.deletePlayerMatch(w1.toString());
+                    await cache.deleteUserRating(w1);
+                    await cache.deletePlayerMatch(w2.toString());
+                    await cache.deleteUserRating(w2); 
+                    player1?.socket.send(JSON.stringify({
+                        type: 'match_failed',
+                        reason: 'Game server did not respond'
+                    }));
+                    player2?.socket.send(JSON.stringify({
+                        type: 'match_failed',
+                        reason: 'Game server did not respond'
+                    }));
+                    player1?.socket.close();
+                    player2?.socket.close();
                 }
+                
                 return;
             }
         } else if (this.finalMatchId && matchId === this.finalMatchId) {
@@ -244,12 +269,6 @@ export class TournamentService implements ITournament {
                 { userId: this.lostPlayers[0], place: 3 },
                 { userId: this.lostPlayers[1], place: 4 },
             ];
-
-            for (const r of finalResults) {
-                await cache.saveUserRating(r.userId, this.tournamentPlayers.get(r.userId.toString())?.mmr || 1000);
-                await cache.deletePlayerMatch(r.userId.toString());
-            }
-
             await processMatchResult(matchId, 1, finalResults);
             this.isFinalMatchCompleted = true;
             this.onComplete?.();
@@ -260,13 +279,14 @@ export class TournamentService implements ITournament {
         return this.tournamentPlayers.has(id);
     }
 
-    public waitForReconnect = async (userId: string, timeout = 10000): Promise<boolean> => {
+    public waitForReconnect = async (userId: string[], timeout = 20000): Promise<boolean> => {
         return new Promise(resolve => {
             const interval = setInterval(() => {
-            if (this.hasPlayer(userId)) {
-                console.log('Has player ', userId);
-                const player = this.tournamentPlayers.get(userId);
-                if (player?.socket?.readyState === 1) {
+            if (this.hasPlayer(userId[0]) && this.hasPlayer(userId[1])) {
+                console.log('Has players: ', userId[0], userId[1]);
+                const player1 = this.tournamentPlayers.get(userId[0]);
+                const player2 = this.tournamentPlayers.get(userId[1]);
+                if (player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
                     clearInterval(interval);
                     resolve(true);
                 }
