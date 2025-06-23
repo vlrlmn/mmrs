@@ -18,18 +18,18 @@ export async function processMatchResult(
         let newRating = currentRating;
 
         switch (result.place) {
-        case 0:
-            newRating += 25;
-            break;
-        case 1:
-            newRating += 12;
-            break;
-        case 2:
-        case 3:
-            newRating = Math.max(0, currentRating - 12);
-            break;
-        default:
-            throw new Error('Invalid place in tournament result');
+            case 0:
+                newRating += 25;
+                break;
+            case 1:
+                newRating += 12;
+                break;
+            case 2:
+            case 3:
+                newRating = Math.max(0, currentRating - 12);
+                break;
+            default:
+                throw new Error('Invalid place in tournament result');
         }
         updates.push({ id: result.userId, rating: newRating });
     }

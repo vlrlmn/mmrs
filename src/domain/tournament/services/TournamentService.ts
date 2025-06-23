@@ -264,10 +264,10 @@ export class TournamentService implements ITournament {
             console.log('Final match completed');
 
             const finalResults = [
-                { userId: winner.userId, place: 1 },
-                { userId: loser.userId, place: 2 },
-                { userId: this.lostPlayers[0], place: 3 },
-                { userId: this.lostPlayers[1], place: 4 },
+                { userId: winner.userId, place: 0 },
+                { userId: loser.userId, place: 1 },
+                { userId: this.lostPlayers[0], place: 2 },
+                { userId: this.lostPlayers[1], place: 3 },
             ];
             await processMatchResult(matchId, 1, finalResults);
             this.isFinalMatchCompleted = true;
