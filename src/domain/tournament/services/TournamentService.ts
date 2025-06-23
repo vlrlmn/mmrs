@@ -91,19 +91,19 @@ export class TournamentService implements ITournament {
                 this.storage.setMatchStatus(match2, "failed");
                 p1.socket.send(JSON.stringify({
                     type: 'match_failed',
-                    reason: 'Game server did not respond'
+                    message: 'Game server did not respond'
                 }));
                 p2.socket.send(JSON.stringify({
                     type: 'match_failed',
-                    reason: 'Game server did not respond'
+                    message: 'Game server did not respond'
                 }));
                 p3.socket.send(JSON.stringify({
                     type: 'match_failed',
-                    reason: 'Game server did not respond'
+                    message: 'Game server did not respond'
                 }));
                 p4.socket.send(JSON.stringify({
                     type: 'match_failed',
-                    reason: 'Game server did not respond'
+                    message: 'Game server did not respond'
                 }));
                 p1.socket.close();
                 p2.socket.close();

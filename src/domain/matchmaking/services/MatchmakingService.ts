@@ -126,11 +126,11 @@ async confirmMatch(playerId: string): Promise<boolean> {
 
                     match.player1.socket.send(JSON.stringify({
                         type: 'match_failed',
-                        reason: 'Game server did not respond'
+                        message: 'Game server did not respond'
                     }));
                     match.player2.socket.send(JSON.stringify({
                         type: 'match_failed',
-                        reason: 'Game server did not respond'
+                        message: 'Game server did not respond'
                     }));
 
                     return false;
