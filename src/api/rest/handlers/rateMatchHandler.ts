@@ -38,7 +38,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
     }
   }
 
-    if (TournamentManager.has(matchId)) {
+    if (isTournament && TournamentManager.has(matchId)) {
       const tournament = TournamentManager.getTournamentByMatchId(matchId);
        if (tournament) {
         await tournament.handleMatchResult(matchId, results);
@@ -46,18 +46,18 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
         return reply.code(200).send({ success: true, message: 'Tournament match result received' });
       }
       if (!tournament) {
-        return reply.code(404).send({ error: 'Tournament not found for this match' });
+        return reply.code(400).send({ type: 'error', message: 'Tournament not found for this match' });
       }
 
-      return reply.code(200).send({ success: true, message: 'Tournament match result received' });
+      return reply.code(200).send({ message: 'Tournament match result received' });
     }
 
     const updates = await updateRatings(matchId, results, req);
     await updateUMS(updates);
     console.log('Updated rating and UMS ', updates);
-    return reply.code(200).send({ success: true, updated: updates.length });
+    return reply.code(200).send({ updated: updates.length });
   } catch (err) {
     console.error(err);
-    return reply.code(500).send({ error: 'Internal server error' });
+    return reply.code(500).send({ type: 'error', message: 'Internal server error' });
   }
 }

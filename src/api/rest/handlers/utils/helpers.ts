@@ -5,7 +5,7 @@ export function parseMatchId(req: FastifyRequest, reply: FastifyReply): number |
   const matchId = parseInt(matchIdRaw, 10);
 
   if (isNaN(matchId)) {
-    reply.code(400).send({ error: 'Invalid match ID' });
+    reply.code(400).send({ type: 'error', message: 'Invalid match ID' });
     return null;
   }
 
@@ -18,16 +18,15 @@ export function validatePayload(
   reply: FastifyReply
 ): boolean {
   if (!Array.isArray(results) || typeof status !== 'number') {
-    reply.code(400).send({ error: 'Invalid payload format' });
+    reply.code(400).send({ type: 'error', message: 'Invalid payload format' });
     return false;
   }
 
   for (const r of results) {
     if (typeof r.userId !== 'number' || typeof r.place !== 'number') {
-      reply.code(400).send({ error: 'Invalid result entry' });
+      reply.code(400).send({ type: 'error', message: 'Invalid result entry' });
       return false;
     }
   }
-
   return true;
 }
