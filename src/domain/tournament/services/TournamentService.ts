@@ -66,7 +66,6 @@ export class TournamentService implements ITournament {
                 console.log(`Game server notified: match ${match2} created.`);
                 this.storage.setMatchStatus(match1, 'active');
                 this.storage.setMatchStatus(match2, 'active');
-                
                 console.log(await res1.text());
                 console.log(await res2.text());
                 try {
@@ -227,8 +226,6 @@ export class TournamentService implements ITournament {
                     await cache.deleteUserRating(w2); 
                 }
                 console.log(`Waiting for ${w1} to reconnect...`);
-                // const ok1 = await this.waitForReconnect(w1.toString(), 10000);
-                // const ok2 = await this.waitForReconnect(w2.toString(), 10000);
                 const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
 
                 console.log(`Final match started: with ${w1} and ${w2}`);

@@ -52,7 +52,7 @@ async function main() {
     await app.close()
     process.exit(0)
   })
-  
+
   process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err)
     process.exit(1)

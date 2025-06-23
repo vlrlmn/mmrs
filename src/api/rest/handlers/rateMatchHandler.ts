@@ -43,12 +43,11 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
        if (tournament) {
         await tournament.handleMatchResult(matchId, results);
         console.log('Tournament match handled');
-        return reply.code(200).send({ success: true, message: 'Tournament match result received' });
+        return reply.code(200).send({ message: 'Tournament match result received' });
       }
       if (!tournament) {
         return reply.code(400).send({ type: 'error', message: 'Tournament not found for this match' });
       }
-
       return reply.code(200).send({ message: 'Tournament match result received' });
     }
 
