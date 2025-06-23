@@ -5,6 +5,8 @@ import CacheStorage from "../../cache/CacheStorage";
 import Config from "../../../config/Config";
 import { processMatchResult } from "../../../api/internal/processMatchResult";
 import { TournamentManager } from "../TournamentManager";
+import TournamentMatch from "./TournmanetMatch";
+import { match } from "assert";
 
 
 export class TournamentService implements ITournament {
@@ -34,94 +36,90 @@ export class TournamentService implements ITournament {
         return res;
     }
 
+    async failed(matches: Array<TournamentMatch>) {
+        matches.forEach(async (match: TournamentMatch) => {
+        // } catch (error) {
+        //     console.error(`Failed to notify game server about match ${match1}:`, error);
+        //     console.error(`Failed to notify game server about match ${match2}:`, error);
+        //     this.storage.setMatchStatus(match1, "failed");
+        //     this.storage.setMatchStatus(match2, "failed");
+        //     p1.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     p2.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     p3.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     p4.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     p1.socket.close();
+        //     p2.socket.close();
+        //     p3.socket.close();
+        //     p4.socket.close();
+        //     return false;
+        // }
+        })
+    }
+
     async addPlayer(player: Player): Promise<boolean> {
-        console.log('before set');
+
+        // Save player to Map as participant
         this.tournamentPlayers.set(player.id, player);
         this.socketToPlayerId.set(player.socket, player.id);
-        console.log('Values set');
-        // this.broadcastPlayersStatus();
 
-        if (this.tournamentPlayers.size === 4) {
-            console.log('Check for 4 players');
-            const players = Array.from(this.tournamentPlayers.values()).sort((a, b) => parseInt(a.id) - parseInt(b.id));
-            const match1 = this.storage.addMatch(2, true);
-            const match2 = this.storage.addMatch(2, true);
-            TournamentManager.register(match1, this);
-            TournamentManager.register(match2, this);
-            const [p1, p2, p3, p4] = players;
-            console.log('Created players', p1.id, p2.id, p3.id, p4.id);
-            this.storage.addParticipant(match1, parseInt(p1.id));
-            this.storage.addParticipant(match1, parseInt(p2.id));
-            this.storage.addParticipant(match2, parseInt(p3.id));
-            this.storage.addParticipant(match2, parseInt(p4.id));
-            const cache = CacheStorage.getInstance();
-            console.log('Caching players');
-            for (const player of players) {
-                await cache.saveUserRating(parseInt(player.id), player.mmr);
-            }
-            try {
-                const res1 = await this.notifyGameServer(match1, [parseInt(p1.id), parseInt(p2.id)]);
-                const res2 = await this.notifyGameServer(match2, [parseInt(p3.id), parseInt(p4.id)]);
-
-                console.log(`Game server notified: match ${match2} created.`);
-                this.storage.setMatchStatus(match1, 'active');
-                this.storage.setMatchStatus(match2, 'active');
-                console.log(await res1.text());
-                console.log(await res2.text());
-                try {
-                    await cache.savePlayerMatch(p1.id, match1.toString());
-                    await cache.savePlayerMatch(p2.id, match1.toString());
-                } catch(error) {
-                    console.log('Not cached! savePlayerMatch: ', error);
-                }
-                try {
-                    await cache.savePlayerMatch(p3.id, match2.toString());
-                    await cache.savePlayerMatch(p4.id, match2.toString());
-                } catch(error) {
-                    console.log('Not cached! savePlayerMatch: ', error);
-                }
-                console.log('savePlayerMatch, player sent');
-                this.semifinalMatchIds = [Number(match1), Number(match2)];
-                console.log('Match ids: ', match1, match2);
-            } catch (error) {
-                console.error(`Failed to notify game server about match ${match1}:`, error);
-                console.error(`Failed to notify game server about match ${match2}:`, error);
-                this.storage.setMatchStatus(match1, "failed");
-                this.storage.setMatchStatus(match2, "failed");
-                p1.socket.send(JSON.stringify({
-                    type: 'match_failed',
-                    message: 'Game server did not respond'
-                }));
-                p2.socket.send(JSON.stringify({
-                    type: 'match_failed',
-                    message: 'Game server did not respond'
-                }));
-                p3.socket.send(JSON.stringify({
-                    type: 'match_failed',
-                    message: 'Game server did not respond'
-                }));
-                p4.socket.send(JSON.stringify({
-                    type: 'match_failed',
-                    message: 'Game server did not respond'
-                }));
-                p1.socket.close();
-                p2.socket.close();
-                p3.socket.close();
-                p4.socket.close();
-                return false;
-            }
-            p1.socket.send(JSON.stringify({ type: 'match_ready', matchId: match1 }));
-            p2.socket.send(JSON.stringify({ type: 'match_ready', matchId: match1 }));
-            p3.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
-            p4.socket.send(JSON.stringify({ type: 'match_ready', matchId: match2 }));
-
-            p1.socket.close();
-            p2.socket.close();
-            p3.socket.close();
-            p4.socket.close();
-            console.log('Added player, sent match ready');
+        // If all players are added, start the tournament
+        if (this.tournamentPlayers.size !== 4) {
             return true;
         }
+
+        // Define players and matches. All matches declare in TournamentMananger
+        const players = Array.from(this.tournamentPlayers.values()).sort((a, b) => parseInt(a.id) - parseInt(b.id));
+        const matches = [
+            new TournamentMatch([players[0], players[1]], this.storage),
+            new TournamentMatch([players[2], players[3]], this.storage)
+        ]
+        matches.forEach((match:TournamentMatch) => TournamentManager.register(match.id, this))
+        
+        // Save matches/participants to the database
+        matches.forEach((match:TournamentMatch) => match.save());
+        
+        
+        // Save users data in cache
+        let failedMatch1: Error | undefined = await matches[0].cacheUsersInfo();   
+        let failedMatch2: Error | undefined = await matches[1].cacheUsersInfo();
+        if (failedMatch1 !== undefined || failedMatch2 !== undefined) {
+            this.failed(matches);
+            console.log("TournamentService error : failed to cache users info for match");
+            return false;
+        }
+
+
+        // Notify game server about matches
+        failedMatch1 = await matches[0].notifyGameServer();
+        failedMatch2 = await matches[1].notifyGameServer();
+        if (failedMatch1 !== undefined || failedMatch2 !== undefined) {
+            this.failed(matches);
+            console.log("TournamentService error : failed to notify game server about match");
+            return false;
+        }
+
+        
+        // Recording semifinal match ids
+        this.semifinalMatchIds = matches.map((match:TournamentMatch) => match.id);
+
+        // Notify players about match ready
+        matches.forEach((match:TournamentMatch) => match.broadcastMatchReady());
+
+        // Close all sockets of players
+        matches.forEach((match:TournamentMatch) => match.closeBroadcast());
+
         return true;
     }
 
