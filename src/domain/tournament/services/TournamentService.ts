@@ -248,16 +248,15 @@ export class TournamentService implements ITournament {
                     await cache.deleteUserRating(w2); 
                     player1?.socket.send(JSON.stringify({
                         type: 'match_failed',
-                        reason: 'Game server did not respond'
+                        message: 'Game server did not respond'
                     }));
                     player2?.socket.send(JSON.stringify({
                         type: 'match_failed',
-                        reason: 'Game server did not respond'
+                        message: 'Game server did not respond'
                     }));
                     player1?.socket.close();
                     player2?.socket.close();
                 }
-                
                 return;
             }
         } else if (this.finalMatchId && matchId === this.finalMatchId) {

@@ -3,9 +3,13 @@ import { updateRatings } from './utils/updateRatings';
 import { updateUMS } from './utils/updateUMS';
 import { parseMatchId, validatePayload } from './utils/helpers';
 import { TournamentManager } from '../../../domain/tournament/TournamentManager';
-import { TournamentService } from '../../../domain/tournament/services/TournamentService';
+import { Storage } from '../../../storage/Storage';
+import CacheStorage from '../../../domain/cache/CacheStorage';
+
 export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply) {
   try {
+    const storage = new Storage();
+    const cache = CacheStorage.getInstance();
     const matchId = parseMatchId(req, reply);
     if (matchId === null) return;
 
@@ -18,13 +22,21 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
     if (!validatePayload(status, results, reply)) return;
 
     if (status === 2) {
-      return reply.code(200).send(JSON.stringify({
-        type: 'match_failed', 
-        message: 'Match failed, no MMR changes made' 
-      }));
-      // storage.setMatchStatus(matchId, "failed");
-      // change status == 'failed + remove caching
+      storage.setMatchStatus(matchId, "failed");
+      for (const { userId } of results) {
+        try {
+          await cache.deletePlayerMatch(userId.toString());
+          await cache.deleteUserRating(userId);
+          console.log(`Cleaned up cache for user ${userId}`);
+        } catch (error) {
+          console.error(`Failed to clean cache for user ${userId}:`, error);
+        }
+        return reply.code(200).send(JSON.stringify({
+          type: 'match_failed', 
+          message: 'Match failed, no MMR changes made' 
+        }));
     }
+  }
 
     if (TournamentManager.has(matchId)) {
       const tournament = TournamentManager.getTournamentByMatchId(matchId);
