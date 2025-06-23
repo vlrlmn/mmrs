@@ -96,14 +96,12 @@ class JwtGenerator {
 async function deleteJwtToken(request: FastifyRequest, type: TokenType): Promise<boolean> {
 	const token = await getTokenFromRequest(request, type);
 	if (!token) {
-		console.log(`${type} token extraction from request failed`);
 		return false;
 	}
 	try {
 		const insatnce = JwtGenerator.getInstance();
 		insatnce.deleteToken(`${type}-${token}`);
 	} catch (err: any) {
-		console.log(err);
 		return false;
 	}
 	return true;
@@ -145,13 +143,11 @@ async function isTokenValid(request: FastifyRequest | string, type: TokenType = 
 	}
 
 	if (!token) {
-		console.log(`${type} token extraction from request failed`);
 		return undefined;
 	}
 	try {
 		return await JwtGenerator.getInstance().verifyToken(token, type);
 	} catch (err: any) {
-		console.log(err);
 		return undefined;
 	}
 }
@@ -162,7 +158,6 @@ async function generateJwtTokenPair(payload: JwtPayload): Promise<TokenPair | un
 	try {
 		return JwtGenerator.getInstance().generateTokenPair(payload);
 	} catch (err: any) {
-		console.log(err);
 		return undefined;
 	}
 }

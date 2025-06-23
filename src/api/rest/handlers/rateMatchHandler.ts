@@ -18,7 +18,10 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
     if (!validatePayload(status, results, reply)) return;
 
     if (status === 2) {
-      return reply.code(200).send({ message: 'Match failed, no MMR changes made' });
+      return reply.code(200).send(JSON.stringify({
+        type: 'match_failed', 
+        message: 'Match failed, no MMR changes made' 
+      }));
       // storage.setMatchStatus(matchId, "failed");
       // change status == 'failed + remove caching
     }
