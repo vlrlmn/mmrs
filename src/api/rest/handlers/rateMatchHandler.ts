@@ -26,6 +26,20 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 		if (status === 2) {
 
 			console.log("rateMatchHandler : Match failed, no MMR changes made");
+			if (isTournament && TournamentManager.has(matchId)) {
+				const tournament = TournamentManager.getTournamentByMatchId(matchId);
+				if (!tournament) return;
+
+				const tournamentId = tournament.getTournamentId();
+				if (tournamentId !== undefined) {
+					storage.setMatchStatus(tournamentId, 'failed');
+					const allMatches = tournament.getAllMatches();
+					await tournament.failed(allMatches);
+					// for (const match of allMatches) {
+					// 	storage.setMatchStatus(match.id, 'failed');
+					// }
+				}
+			}
 
 			storage.setMatchStatus(matchId, "failed");
 			for (const { userId } of results) {
@@ -37,9 +51,8 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 					console.error(`Failed to clean cache for user ${userId}:`, error);
 				}
 			}
-
 			return reply.code(200).send(JSON.stringify({
-				type: 'match_failed', 
+				type: 'match_failed',
 				message: 'Match failed, no MMR changes made' 
 			}));
 		}
@@ -54,6 +67,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 			console.log('rateMatchHandler : Tournament match handled');
 			return reply.code(200).send({ message: 'Tournament match result received' });
 		}
+
 
 		const updates = await updateRatings(matchId, results, req);
 		await updateUMS(updates);

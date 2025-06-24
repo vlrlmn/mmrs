@@ -51,6 +51,7 @@ export class TournamentService implements ITournament {
         if (this.tournamentId) {
             this.storage.setMatchStatus(this.tournamentId, 'failed');
         }
+        this.onComplete?.();
     }
 
     private saveTournament(): boolean {
@@ -151,6 +152,13 @@ export class TournamentService implements ITournament {
 
     public  getPlayerCount(): number {
         return this.tournamentPlayers.size;
+    }
+
+
+    public  getTournamentId(): number | undefined {
+        if (!this.tournamentId)
+            return ;
+        return this.tournamentId;
     }
 
     private async handleFinalMatchCreation() {
@@ -314,5 +322,9 @@ export class TournamentService implements ITournament {
             }
         }
     }
+
+    public getAllMatches(): TournamentMatch[] {
+		return Array.from(this.matches.values());
+	}
 
 }
