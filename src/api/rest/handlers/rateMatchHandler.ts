@@ -24,7 +24,6 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 		}
 
 		if (status === 2) {
-
 			console.log("rateMatchHandler : Match failed, no MMR changes made");
 			if (isTournament && TournamentManager.has(matchId)) {
 				const tournament = TournamentManager.getTournamentByMatchId(matchId);
@@ -32,9 +31,10 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 
 				const tournamentId = tournament.getTournamentId();
 				if (tournamentId !== undefined) {
-					storage.setMatchStatus(tournamentId, 'failed');
+					// storage.setMatchStatus(tournamentId, 'failed');
 					const allMatches = tournament.getAllMatches();
 					await tournament.failed(allMatches);
+					return reply.code(200);
 					// for (const match of allMatches) {
 					// 	storage.setMatchStatus(match.id, 'failed');
 					// }
