@@ -17,6 +17,7 @@ export class TournamentService implements ITournament {
     private lostPlayers: number[] = [];
     private semifinalMatchIds: number[] = [];
     private finalMatchId: number | null = null;
+    private matches: Map<number, TournamentMatch> = new Map();
     private isFinalMatchCreated = false;
     private isFinalMatchCompleted = false;
 
@@ -65,6 +66,42 @@ export class TournamentService implements ITournament {
         //     p4.socket.close();
         //     return false;
         // }
+
+        // } catch (error) {
+        //     this.storage.setMatchStatus(finalMatchId, "failed");
+        //     await cache.deletePlayerMatch(w1.toString());
+        //     await cache.deleteUserRating(w1);
+        //     await cache.deletePlayerMatch(w2.toString());
+        //     await cache.deleteUserRating(w2); 
+        // }
+
+
+        // try {
+        //     await this.notifyGameServer(finalMatchId, [w1, w2]);
+
+        // if (reconnected && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
+        //     console.log(`Both players reconnected, sending match_ready`);
+        //     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+        //     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
+        // } else {
+        //     console.warn(`Not all players reconnected in time`);
+        //     if (!reconnected) console.warn(`Player ${w1} did not reconnect`);
+        //     this.storage.setMatchStatus(finalMatchId, "failed");
+        //     await cache.deletePlayerMatch(w1.toString());
+        //     await cache.deleteUserRating(w1);
+        //     await cache.deletePlayerMatch(w2.toString());
+        //     await cache.deleteUserRating(w2); 
+        //     player1?.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     player2?.socket.send(JSON.stringify({
+        //         type: 'match_failed',
+        //         message: 'Game server did not respond'
+        //     }));
+        //     player1?.socket.close();
+        //     player2?.socket.close();
+        // }
         })
     }
 
@@ -85,10 +122,12 @@ export class TournamentService implements ITournament {
             new TournamentMatch([players[0], players[1]], this.storage),
             new TournamentMatch([players[2], players[3]], this.storage)
         ]
-        matches.forEach((match:TournamentMatch) => TournamentManager.register(match.id, this))
-        
-        // Save matches/participants to the database
         matches.forEach((match:TournamentMatch) => match.save());
+        
+        matches.forEach((match:TournamentMatch) => TournamentManager.register(match.id, this))
+        matches.forEach((match:TournamentMatch) => this.matches.set(match.id, match));
+
+        // Save matches/participants to the database
         
         
         // Save users data in cache
@@ -168,105 +207,104 @@ export class TournamentService implements ITournament {
         return this.tournamentPlayers.size;
     }
 
-    public async handleMatchResult(matchId: number, results: { userId: number; place: number }[]) {
-        console.log(`[handleMatchResult] Called for match ${matchId}`);
-        console.log(`typeof matchId:`, typeof matchId);
-        console.log(`typeof semifinalMatchIds[0]:`, typeof this.semifinalMatchIds[0]);
-        results = results; 
-        const winner = results.find(r => r.place === 0);
-        const loser = results.find(r => r.place === 1);
-        console.log(`[handleMatchResult] Results:`, results);
-        
-        if (!winner || !loser) {
-            console.log(`Invalid tournament match results for match ${matchId}`);
+    private async handleFinalMatchCreation() {
+        const [w1, w2] = this.semifinalWinners;
+
+        console.log(`TournamentService info : Waiting for ${w1} ${w2} to reconnect...`);
+        const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
+        if (!reconnected) {
+            // TODO : TOURNAMENT FAILED
+            console.error(`TournamentService error: Players ${w1} and ${w2} did not reconnect in time`);
             return;
         }
 
-        const cache = CacheStorage.getInstance();
-        console.log(`[handleMatchResult] Called with matchId=${matchId}`);
-        console.log(`[handleMatchResult] semifinalMatchIds=`, this.semifinalMatchIds);
-        console.log(`[handleMatchResult] includes=`, this.semifinalMatchIds.includes(matchId));
+        const player1 = this.tournamentPlayers.get(w1.toString());
+        const player2 = this.tournamentPlayers.get(w2.toString());
+        if (!player1 || !player2) {
+            // TODO : TOURNAMENT FAILED
+            console.error(`TournamentService error: Players ${w1} or ${w2} not found in tournament`);
+            return;
+        }
+        
 
-        if (this.semifinalMatchIds.includes(matchId)) {
-            this.semifinalWinners.push(winner.userId);
-            this.lostPlayers.push(loser.userId);
-            console.log(`Semifinal ${matchId}: winner ${winner.userId}, loser ${loser.userId}`);
+        console.log(`TournamentService info : Final match started: with ${w1} and ${w2}`);
+        const finalMatch = new TournamentMatch([player1, player2], this.storage);
+        finalMatch.save();
+        TournamentManager.register(finalMatch.id, this);
 
-            if (this.semifinalWinners.length === 2) {
-                const [w1, w2] = this.semifinalWinners;
-                const finalMatchId = this.storage.addMatch(2, true);
-                this.finalMatchId = finalMatchId;
-                this.isFinalMatchCreated = true;
+        this.finalMatchId = finalMatch.id;
+        this.isFinalMatchCreated = true;
 
-                this.storage.addParticipant(finalMatchId, w1);
-                this.storage.addParticipant(finalMatchId, w2);
-                TournamentManager.register(finalMatchId, this);
-                try {
-                    await cache.saveUserRating(w1, this.tournamentPlayers.get(w1.toString())?.mmr || 1000);
-                    await cache.saveUserRating(w2, this.tournamentPlayers.get(w2.toString())?.mmr || 1000);
-                } catch(error) {
-                    console.error('Cache saveUserRating failed:', error);
-                }
-                try {
-                    await cache.savePlayerMatch(w1.toString(), finalMatchId.toString());
-                    await cache.savePlayerMatch(w2.toString(), finalMatchId.toString());
-                } catch(error) {
-                    console.error('Cache savePlayerMatch failed:', error);
-                }
-                console.log(`Sending final match creation to game server: ${finalMatchId}, players: [${w1}, ${w2}]`);
-                try {
-                    await this.notifyGameServer(finalMatchId, [w1, w2]);
-                } catch (error) {
-                    this.storage.setMatchStatus(finalMatchId, "failed");
-                    await cache.deletePlayerMatch(w1.toString());
-                    await cache.deleteUserRating(w1);
-                    await cache.deletePlayerMatch(w2.toString());
-                    await cache.deleteUserRating(w2); 
-                }
-                console.log(`Waiting for ${w1} to reconnect...`);
-                const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
+        const cacheError = await finalMatch.cacheUsersInfo();
+        if (cacheError) {
+            // TODO : TOURNAMENT FAILED
+            console.error(`TournamentService error: Failed to cache users info for final match`, cacheError);
+            return;
+        }
 
-                console.log(`Final match started: with ${w1} and ${w2}`);
-                const player1 = this.tournamentPlayers.get(w1.toString());
-                const player2 = this.tournamentPlayers.get(w2.toString());
-                if (reconnected && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
-                    console.log(`Both players reconnected, sending match_ready`);
-                    player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
-                    player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
-                } else {
-                    console.warn(`Not all players reconnected in time`);
-                    if (!reconnected) console.warn(`Player ${w1} did not reconnect`);
-                    this.storage.setMatchStatus(finalMatchId, "failed");
-                    await cache.deletePlayerMatch(w1.toString());
-                    await cache.deleteUserRating(w1);
-                    await cache.deletePlayerMatch(w2.toString());
-                    await cache.deleteUserRating(w2); 
-                    player1?.socket.send(JSON.stringify({
-                        type: 'match_failed',
-                        message: 'Game server did not respond'
-                    }));
-                    player2?.socket.send(JSON.stringify({
-                        type: 'match_failed',
-                        message: 'Game server did not respond'
-                    }));
-                    player1?.socket.close();
-                    player2?.socket.close();
-                }
-                return;
-            }
-        } else if (this.finalMatchId && matchId === this.finalMatchId) {
-            console.log('Final match completed');
+        this.matches.set(finalMatch.id, finalMatch);
+
+        const notifyError = await finalMatch.notifyGameServer();
+        if (notifyError) {
+            // TODO : TOURNAMENT FAILED
+            console.error(`TournamentService error: Failed to notify game server about final match`, notifyError);
+            return;
+        }
+
+        finalMatch.broadcastMatchReady();
+    }
+
+    public async handleMatchResult(matchId: number, results: Array<{ userId: number, place: number }>) {
+
+        // Check if matchId is valid
+        const match = this.matches.get(matchId);
+        if (!match) {
+            console.log(`Tournament error : Match ${matchId} not found in terms of results`);
+            return;
+        }
+
+        // Check if results are valid
+        match.uploadResults(results);
+        const matchResult = match?.result;
+        if (!matchResult) {
+            console.log(`Tournament error : Match ${matchId} has no result`);
+            return;
+        }
+
+        console.log(`TournamentService info : Match ${matchId} completed with results:`, results);
+
+        // Check if match is final
+        if (this.finalMatchId && matchId === this.finalMatchId) {
+            console.log('TournamentService info : Final match completed');
 
             const finalResults = [
-                { userId: winner.userId, place: 0 },
-                { userId: loser.userId, place: 1 },
-                { userId: this.lostPlayers[0], place: 2 },
-                { userId: this.lostPlayers[1], place: 3 },
+                { place: 0, userId: matchResult.winner,  },
+                { place: 1, userId: matchResult.loser,   },
+                { place: 2, userId: this.lostPlayers[0], },
+                { place: 3, userId: this.lostPlayers[1], },
             ];
             await processMatchResult(matchId, 1, finalResults);
             this.isFinalMatchCompleted = true;
             this.onComplete?.();
+            return
         }
+
+        // Check if match is semifinal
+        if (!this.semifinalMatchIds.includes(matchId)) {
+            console.log(`TournamentService error : Match ${matchId} is not a semifinal match`);
+            return ;
+        }
+
+        this.lostPlayers.push(matchResult.loser);
+        
+        this.semifinalWinners.push(matchResult.winner);
+        
+        if (this.semifinalWinners.length < 2) {
+            console.log(`TournamentService info : Match ${matchId} completed, waiting for next semifinal match`);
+            return ;
+        }
+
+        await this.handleFinalMatchCreation()
     }
 
     public hasPlayer(id: string): boolean {

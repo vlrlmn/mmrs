@@ -64,7 +64,7 @@ export default class CacheStorage {
 	public async getUserRating(userId: number): Promise<number | null> {
 		const response = await this.radishClient.get(`mmr:${userId}`);
 		if (response.status !== 200) {
-			throw CacheGetError;
+			return null;
 		}
 		return response.value ? parseInt(response.value) : null;
 	}

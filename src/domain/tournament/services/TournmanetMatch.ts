@@ -19,6 +19,8 @@ export default class TournamentMatch {
 
     private readonly storage:IStorage;
     private readonly players:Array<Player>;
+
+    private _result?: {winner: number, loser: number};
     
     constructor(players:Array<Player> ,storage:IStorage) {
         this.storage = storage;
@@ -45,10 +47,10 @@ export default class TournamentMatch {
         const cache = CacheStorage.getInstance();
         try {
             await cache.saveUserRating(parseInt(this.players[0].id), this.players[0].mmr);
-            await cache.saveUserRating(parseInt(this.players[0].id), this.players[0].mmr);
+            await cache.saveUserRating(parseInt(this.players[1].id), this.players[1].mmr);
 
             await cache.savePlayerMatch(this.players[0].id, this._id.toString());
-            await cache.savePlayerMatch(this.players[0].id, this._id.toString());
+            await cache.savePlayerMatch(this.players[1].id, this._id.toString());
             return undefined;
         } catch (error){
             console.log("TournamentMatch error: failed to cache users info", error);
@@ -107,5 +109,20 @@ export default class TournamentMatch {
         this.players.forEach((player: Player) => {
             player.socket.close();
         });
+    }
+
+    public uploadResults(places: Array<{ userId: number, place: number }>) {
+        
+        const winnerId = places.find(place => place.place === 0)?.userId;
+        const loserId = places.find(place => place.place === 1)?.userId;
+        if (winnerId === undefined || loserId === undefined) {
+            throw new Error("TournamentMatch error: winner or loser id not found in places array.");
+        }
+        this.storage.updateMatchWinner(this._id, winnerId);
+        this._result = { winner: winnerId, loser: loserId };
+    }
+
+    public get result() {
+        return this._result;
     }
 }   
