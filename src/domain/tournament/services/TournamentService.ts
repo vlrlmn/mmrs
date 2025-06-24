@@ -241,7 +241,7 @@ export class TournamentService implements ITournament {
         const [w1, w2] = this.semifinalWinners;
 
         console.log(`TournamentService info : Waiting for ${w1} ${w2} to reconnect...`);
-        const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
+        const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 60000);
         if (!reconnected) {
             await this.failed([...this.matches.values()]);
             console.error(`TournamentService error: Players ${w1} and ${w2} did not reconnect in time`);
@@ -358,7 +358,7 @@ export class TournamentService implements ITournament {
         return this.tournamentPlayers.has(id);
     }
 
-    public waitForReconnect = async (userId: string[], timeout = 20000): Promise<boolean> => {
+    public waitForReconnect = async (userId: string[], timeout = 60000): Promise<boolean> => {
         return new Promise(resolve => {
             const interval = setInterval(() => {
             if (this.hasPlayer(userId[0]) && this.hasPlayer(userId[1])) {
