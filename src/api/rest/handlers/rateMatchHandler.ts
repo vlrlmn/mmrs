@@ -30,13 +30,9 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 
 				const tournamentId = tournament.getTournamentId();
 				if (tournamentId !== undefined) {
-					// storage.setMatchStatus(tournamentId, 'failed');
 					const allMatches = tournament.getAllMatches();
 					await tournament.failed(allMatches);
 					return reply.code(200);
-					// for (const match of allMatches) {
-					// 	storage.setMatchStatus(match.id, 'failed');
-					// }
 				}
 			}
 

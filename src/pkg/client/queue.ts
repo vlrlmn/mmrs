@@ -11,7 +11,6 @@ export default class RequestQueue {
         this.client = client;
     }
 
-    // Добавить новую задачу в очередь
     add<T>(task: Task<T>): Promise<T> {
         return new Promise((resolve, reject) => {
             const wrappedTask = () =>
@@ -24,7 +23,6 @@ export default class RequestQueue {
         });
     }
 
-    // Обработка задач по очереди
     private async processNext() {
         if (this.processing){
             return ;
@@ -35,7 +33,6 @@ export default class RequestQueue {
             const task = this.queue.shift();
             if (task) {
             try {
-                // Wait for 1 second before checking again
                 while (!this.client.isConnected) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }

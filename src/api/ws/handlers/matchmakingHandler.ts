@@ -2,7 +2,6 @@ import Config from '../../../config/Config';
 import { MatchmakingService } from '../../../domain/matchmaking/services/MatchmakingService';
 import { isTokenValid } from '../../../pkg/jwt/JwtGenerator';
 import { createPlayer } from '../utils/createPlayer';
-// import { notifyMMRSOpponentConfirmed } from  '../utils/notifyMMRS'
 
 export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) {
   let id: number | undefined;
