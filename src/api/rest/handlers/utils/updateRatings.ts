@@ -32,7 +32,6 @@ export async function updateRatings(
     } else {
       throw new Error('Unsupported match format');
     }
-
     updates.push({ id: result.userId, rating: newRating });
   }
 

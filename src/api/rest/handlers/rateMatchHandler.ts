@@ -52,7 +52,6 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 			}
 			await tournament.handleMatchResult(matchId, results);
 			console.log('rateMatchHandler : Tournament match handled');
-			
 			return reply.code(200).send({ message: 'Tournament match result received' });
 		}
 

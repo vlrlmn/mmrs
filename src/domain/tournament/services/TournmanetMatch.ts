@@ -93,13 +93,13 @@ export default class TournamentMatch {
         this.storage.setMatchStatus(this._id, status);
     }
 
-    private broadcast(type: string, data:any) {
+    public broadcast(type: string, data:any) {
         this.players.forEach((player: Player) => {
             if (player.socket && player.socket.readyState === player.socket.OPEN) {
                 player.socket.send(JSON.stringify({ type, ...data }));
             }
         });
-    }   
+    }
 
     public broadcastMatchReady() {
         this.broadcast('match_ready', { matchId: this._id})

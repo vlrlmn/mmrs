@@ -6,8 +6,6 @@ import Config from "../../../config/Config";
 import { processTournamentResult } from "../../../api/internal/processMatchResult";
 import { TournamentManager } from "../TournamentManager";
 import TournamentMatch from "./TournmanetMatch";
-import { match } from "assert";
-
 
 export class TournamentService implements ITournament {
     private tournamentId?: number;
@@ -40,7 +38,21 @@ export class TournamentService implements ITournament {
     }
 
     async failed(matches: Array<TournamentMatch>) {
-        matches.forEach(async (match: TournamentMatch) => {
+        for (const match of matches) {
+            try {
+                match.setStatus('failed');
+                await match.removeUsersInfo();
+                match.broadcast('match_failed', { message: 'Match failed. Tournament failed.' });
+                match.closeBroadcast();
+            } catch (error) {
+                console.error(`TournamentService failed: error handling match ${match.id}:`, error);
+        }
+        if (this.tournamentId) {
+            this.storage.setMatchStatus(this.tournamentId, 'failed');
+        }
+    }
+        // matches.forEach(async (match: TournamentMatch) => {
+            
         // } catch (error) {
         //     console.error(`Failed to notify game server about match ${match1}:`, error);
         //     console.error(`Failed to notify game server about match ${match2}:`, error);
@@ -104,7 +116,8 @@ export class TournamentService implements ITournament {
         //     player1?.socket.close();
         //     player2?.socket.close();
         // }
-        })
+        // })
+        
     }
 
     private saveTournament(): boolean {
@@ -146,8 +159,7 @@ export class TournamentService implements ITournament {
         matches.forEach((match:TournamentMatch) => this.matches.set(match.id, match));
 
         // Save matches/participants to the database
-        
-        
+
         // Save users data in cache
         let failedMatch1: Error | undefined = await matches[0].cacheUsersInfo();   
         let failedMatch2: Error | undefined = await matches[1].cacheUsersInfo();
@@ -180,20 +192,20 @@ export class TournamentService implements ITournament {
         return true;
     }
 
-    private broadcastPlayersStatus(): void {
-        const count = this.tournamentPlayers.size;
-        const message =  JSON.stringify ({
-            message: 'lobby_status',
-            current: count,
-            total: 4
-        });
+    // private broadcastPlayersStatus(): void {
+    //     const count = this.tournamentPlayers.size;
+    //     const message =  JSON.stringify ({
+    //         message: 'lobby_status',
+    //         current: count,
+    //         total: 4
+    //     });
 
-        for (const player of this.tournamentPlayers.values()) {
-            if (player.socket.readyState === 1) {
-                player.socket.send(message);
-            }
-        }
-    }
+    //     for (const player of this.tournamentPlayers.values()) {
+    //         if (player.socket.readyState === 1) {
+    //             player.socket.send(message);
+    //         }
+    //     }
+    // }
 
     public removePlayer(playerId: string): void {
         if (this.tournamentPlayers.has(playerId)) {
@@ -231,7 +243,7 @@ export class TournamentService implements ITournament {
         console.log(`TournamentService info : Waiting for ${w1} ${w2} to reconnect...`);
         const reconnected = await this.waitForReconnect([w1.toString(), w2.toString()], 20000);
         if (!reconnected) {
-            // TODO : TOURNAMENT FAILED
+            await this.failed([...this.matches.values()]);
             console.error(`TournamentService error: Players ${w1} and ${w2} did not reconnect in time`);
             return;
         }
@@ -239,11 +251,10 @@ export class TournamentService implements ITournament {
         const player1 = this.tournamentPlayers.get(w1.toString());
         const player2 = this.tournamentPlayers.get(w2.toString());
         if (!player1 || !player2) {
-            // TODO : TOURNAMENT FAILED
+            await this.failed([...this.matches.values()]);
             console.error(`TournamentService error: Players ${w1} or ${w2} not found in tournament`);
             return;
         }
-        
 
         console.log(`TournamentService info : Final match started: with ${w1} and ${w2}`);
         const finalMatch = new TournamentMatch([player1, player2], this.storage);
@@ -255,7 +266,8 @@ export class TournamentService implements ITournament {
 
         const cacheError = await finalMatch.cacheUsersInfo();
         if (cacheError) {
-            // TODO : TOURNAMENT FAILED
+            await this.failed([...this.matches.values()]);
+            
             console.error(`TournamentService error: Failed to cache users info for final match`, cacheError);
             return;
         }
@@ -264,7 +276,7 @@ export class TournamentService implements ITournament {
 
         const notifyError = await finalMatch.notifyGameServer();
         if (notifyError) {
-            // TODO : TOURNAMENT FAILED
+            await this.failed([...this.matches.values()]);
             console.error(`TournamentService error: Failed to notify game server about final match`, notifyError);
             return;
         }

@@ -49,7 +49,6 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
           socket.close();
           return;
         }
-
         socket.send(JSON.stringify({ type: 'joined', message: 'Successfully joined tournament' }));
       }
 
@@ -63,11 +62,9 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         socket.send(JSON.stringify({ type: 'left', message: 'Left tournament' }));
         socket.close();
       }
-
       else {
         socket.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
       }
-
     } catch (error) {
       console.error('Invalid request: ', error);
       socket.send(JSON.stringify({ type: 'error', message: 'Invalid request' }));
