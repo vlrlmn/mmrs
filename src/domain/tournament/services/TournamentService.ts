@@ -52,72 +52,6 @@ export class TournamentService implements ITournament {
             this.storage.setMatchStatus(this.tournamentId, 'failed');
         }
     }
-        // matches.forEach(async (match: TournamentMatch) => {
-            
-        // } catch (error) {
-        //     console.error(`Failed to notify game server about match ${match1}:`, error);
-        //     console.error(`Failed to notify game server about match ${match2}:`, error);
-        //     this.storage.setMatchStatus(match1, "failed");
-        //     this.storage.setMatchStatus(match2, "failed");
-        //     p1.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     p2.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     p3.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     p4.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     p1.socket.close();
-        //     p2.socket.close();
-        //     p3.socket.close();
-        //     p4.socket.close();
-        //     return false;
-        // }
-
-        // } catch (error) {
-        //     this.storage.setMatchStatus(finalMatchId, "failed");
-        //     await cache.deletePlayerMatch(w1.toString());
-        //     await cache.deleteUserRating(w1);
-        //     await cache.deletePlayerMatch(w2.toString());
-        //     await cache.deleteUserRating(w2); 
-        // }
-
-
-        // try {
-        //     await this.notifyGameServer(finalMatchId, [w1, w2]);
-
-        // if (reconnected && player1?.socket?.readyState === 1 && player2?.socket?.readyState === 1) {
-        //     console.log(`Both players reconnected, sending match_ready`);
-        //     player1.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
-        //     player2.socket.send(JSON.stringify({ type: 'match_ready', matchId: finalMatchId }));
-        // } else {
-        //     console.warn(`Not all players reconnected in time`);
-        //     if (!reconnected) console.warn(`Player ${w1} did not reconnect`);
-        //     this.storage.setMatchStatus(finalMatchId, "failed");
-        //     await cache.deletePlayerMatch(w1.toString());
-        //     await cache.deleteUserRating(w1);
-        //     await cache.deletePlayerMatch(w2.toString());
-        //     await cache.deleteUserRating(w2); 
-        //     player1?.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     player2?.socket.send(JSON.stringify({
-        //         type: 'match_failed',
-        //         message: 'Game server did not respond'
-        //     }));
-        //     player1?.socket.close();
-        //     player2?.socket.close();
-        // }
-        // })
 
     private saveTournament(): boolean {
         const tournamentId = this.storage.addMatch(2, false);
@@ -168,7 +102,6 @@ export class TournamentService implements ITournament {
             return false;
         }
 
-
         // Notify game server about matches
         failedMatch1 = await matches[0].notifyGameServer();
         failedMatch2 = await matches[1].notifyGameServer();
@@ -191,21 +124,6 @@ export class TournamentService implements ITournament {
         return true;
     }
 
-    // private broadcastPlayersStatus(): void {
-    //     const count = this.tournamentPlayers.size;
-    //     const message =  JSON.stringify ({
-    //         message: 'lobby_status',
-    //         current: count,
-    //         total: 4
-    //     });
-
-    //     for (const player of this.tournamentPlayers.values()) {
-    //         if (player.socket.readyState === 1) {
-    //             player.socket.send(message);
-    //         }
-    //     }
-    // }
-
     public removePlayer(playerId: string): void {
         if (this.tournamentPlayers.has(playerId)) {
             const player = this.tournamentPlayers.get(playerId);
@@ -215,7 +133,6 @@ export class TournamentService implements ITournament {
 
             this.tournamentPlayers.delete(playerId);
             console.log(`Removed player ${playerId} from tournament`);
-            // this.broadcastPlayersStatus();
         }
 
        if (this.tournamentPlayers.size === 0) {
@@ -315,7 +232,6 @@ export class TournamentService implements ITournament {
                 { place: 2, userId: this.lostPlayers[0], },
                 { place: 3, userId: this.lostPlayers[1], },
             ];
-
 
             await processTournamentResult({
                 tournamentId: this.tournamentId,

@@ -34,7 +34,6 @@ export class MatchmakingService implements IMatchmaking {
                 break;
             }
         }
-        console.log(`Removed player (${id}) from matchmaking`);
     }
 
     getActiveMatchOf(id: string): PendingMatch | undefined {
@@ -97,8 +96,6 @@ async confirmMatch(playerId: string): Promise<boolean> {
                 await cache.saveUserRating(parseInt(match.player1.id), match.player1.mmr);
                 await cache.saveUserRating(parseInt(match.player2.id), match.player2.mmr);
 
-                console.log("Match saved in database with id: ", matchId);
-
                 try {
                     await fetch(`http://${Config.getInstance().getGameAddr()}/internal/match`, {
                         method: 'POST',
@@ -113,11 +110,9 @@ async confirmMatch(playerId: string): Promise<boolean> {
                         })
                     });
                     this.storage.setMatchStatus(matchId, "active");
-                    console.log(`Game server notified: match ${matchId} created.`);
                     await cache.savePlayerMatch(`${match.player1.id}`, matchId.toString());
                     await cache.savePlayerMatch(`${match.player2.id}`, matchId.toString());
                 } catch (error) {
-                    console.error(`Failed to notify game server about match ${matchId}:`, error);
                     this.storage.setMatchStatus(matchId, "failed");
                     this.activeMatches.delete(match.player1.id);
                     this.activeMatches.delete(match.player2.id);

@@ -23,6 +23,7 @@ export class Storage implements IStorage {
         const stmt = this.db.prepare(`UPDATE match SET status = ? WHERE id = ?`);
         stmt.run(status, matchId);
     }
+
     public updateMatchWinner(matchId: number, winnerId: number): void {
         const stmt = this.db.prepare(`
             UPDATE match
