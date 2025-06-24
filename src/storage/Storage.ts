@@ -39,8 +39,9 @@ export class Storage implements IStorage {
     {
         const countStmt = this.db.prepare(`
             SELECT COUNT(*) as count
-            FROM participant
-            WHERE user_id = ?
+            FROM participant p
+            JOIN match m ON p.match_id = m.id
+            WHERE p.user_id = ? AND m.is_tournament_part = 0
         `);
         const { count: playedMatches } = countStmt.get(userId) as { count: number };
 
