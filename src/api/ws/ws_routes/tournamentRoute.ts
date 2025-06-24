@@ -29,15 +29,11 @@ function getAvailableTournament(): { id: number, tournament: TournamentService }
 export async function registerTournamentRoute(app: FastifyInstance) {
   app.get('/mmrs/api/ws/tournament', { websocket: true }, async (socket: any, _req: FastifyRequest) => {
     const { id, tournament } = getAvailableTournament();
-    console.log(`Tournament handler. ID: ${id}`);
 
     socket.on('message', tournamentHandler(socket, tournament, id));
     socket.on('close', tournamentCloseHandler(socket, tournament, id));
-    console.log(`Socket listeners count before adding error listener:`, socket.listenerCount('error'));
     socket.on('error', (err: any) => {
       console.error('Socket error:', err);
     });
-    console.log(`Socket listeners count after adding error listener:`, socket.listenerCount('error'));
-
   });
 }

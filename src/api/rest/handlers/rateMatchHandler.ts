@@ -57,10 +57,8 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 
 		const updates = await updateRatings(matchId, results, req);
 		await updateUMS(updates);
-		console.log('Updated rating and UMS ', updates);
 		return reply.code(200).send({ updated: updates.length });
 	} catch (err) {
-		console.error(err);
 		return reply.code(500).send({ type: 'error', message: 'Internal server error' });
 	}
 }

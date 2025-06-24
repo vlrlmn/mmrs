@@ -33,7 +33,6 @@ export default class RadishClient {
 			this.isConnected = true;
 			this.reconnecting = false;
 			this.config.onConnect?.();
-			console.log('RadishClient info : connected to server.');
 		});
 
 		socket.on('error', (err) => {
@@ -61,8 +60,6 @@ export default class RadishClient {
 				this.reconnecting = false;
 				return;
 			}
-
-			console.log('RadishClient info : Attempting to reconnect...');
 			this.conn = this.connect();
 			
 			// Wait 1 second before next attempt

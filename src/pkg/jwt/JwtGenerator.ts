@@ -3,11 +3,10 @@ import jwt from 'jsonwebtoken';
 import RadishClient from "../client/client"
 import Config from "../../config/Config"
 import { JwtGeneratorConfig } from "./JwtGeneratorConfig"
-import { JwtSignError, JwtCachError, JwtTokenVerificationError, JwtExtractionError } from './jwtErrors';
+import { JwtSignError, JwtCachError, JwtTokenVerificationError } from './jwtErrors';
 
 function setUpJwtGenerator(): void {
 	JwtGenerator.getInstance();
-	console.log("set up JwtGenerator instance successfuly")
 } 
 
 interface JwtPayload {
