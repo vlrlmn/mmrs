@@ -4,7 +4,7 @@ export interface IStorage {
     updateMatchWinner(matchId: number, winnerId: number): void;
     updateRatingTransaction( matchId: number, updates: { id: number; rating: number }[]): void;
     getMatchesForUser(userId: number, page: number): any[];
-    addMatch(mode: number, isTournament: boolean): number;
+    addMatch(mode: number, isTournamentPart: boolean): number;
     getPlayer(id: number): any ;
     close(): void;
     testRequestToDB(): Promise<string>;

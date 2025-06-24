@@ -3,13 +3,15 @@ import { Player } from "../../matchmaking/types";
 import { IStorage } from '../../../storage/IStorage';
 import CacheStorage from "../../cache/CacheStorage";
 import Config from "../../../config/Config";
-import { processMatchResult } from "../../../api/internal/processMatchResult";
+import { processTournamentResult } from "../../../api/internal/processMatchResult";
 import { TournamentManager } from "../TournamentManager";
 import TournamentMatch from "./TournmanetMatch";
 import { match } from "assert";
 
 
 export class TournamentService implements ITournament {
+    private tournamentId?: number;
+
     private tournamentPlayers: Map<string, Player> = new Map();
     private socketToPlayerId: Map<any, string> = new Map();
     private readonly onComplete?: () => void;
@@ -105,6 +107,18 @@ export class TournamentService implements ITournament {
         })
     }
 
+    private saveTournament(): boolean {
+        const tournamentId = this.storage.addMatch(2, false);
+        if (!tournamentId) {
+            return false;
+        }
+        this.tournamentId = tournamentId;
+        this.tournamentPlayers.forEach((player: Player) => {
+            this.storage.addParticipant(tournamentId, parseInt(player.id));
+        })
+        return true;
+    }
+
     async addPlayer(player: Player): Promise<boolean> {
 
         // Save player to Map as participant
@@ -115,8 +129,12 @@ export class TournamentService implements ITournament {
         if (this.tournamentPlayers.size !== 4) {
             return true;
         }
-
+        
         // Define players and matches. All matches declare in TournamentMananger
+        if (!this.saveTournament()) {
+            console.log("TournamentService error: failed to save tournament");
+            return false;
+        }
         const players = Array.from(this.tournamentPlayers.values()).sort((a, b) => parseInt(a.id) - parseInt(b.id));
         const matches = [
             new TournamentMatch([players[0], players[1]], this.storage),
@@ -276,14 +294,30 @@ export class TournamentService implements ITournament {
         // Check if match is final
         if (this.finalMatchId && matchId === this.finalMatchId) {
             console.log('TournamentService info : Final match completed');
-
+            if (!this.tournamentId) {
+                return ;
+            }
             const finalResults = [
                 { place: 0, userId: matchResult.winner,  },
                 { place: 1, userId: matchResult.loser,   },
                 { place: 2, userId: this.lostPlayers[0], },
                 { place: 3, userId: this.lostPlayers[1], },
             ];
-            await processMatchResult(matchId, 1, finalResults);
+
+
+            await processTournamentResult({
+                tournamentId: this.tournamentId,
+                winnerId: matchResult.winner,
+                results: finalResults,
+                status: 1,
+            });
+
+            const cache = CacheStorage.getInstance();
+            for (const result of finalResults) {
+                await cache.deletePlayerMatch(result.userId.toString());
+                await cache.deleteUserRating(result.userId);
+            }
+            
             this.isFinalMatchCompleted = true;
             this.onComplete?.();
             return

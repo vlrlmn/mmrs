@@ -36,7 +36,7 @@ export default class TournamentMatch {
 
     // Save match and its participants to the database.
     public save() {
-        this._id = this.storage.addMatch(2, true);
+        this._id = this.storage.addMatch(1, true);
         this.players.forEach((player: Player) => {
             this.storage.addParticipant(this._id, parseInt(player.id));
         })

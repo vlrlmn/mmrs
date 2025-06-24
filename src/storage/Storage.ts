@@ -83,7 +83,7 @@ export class Storage implements IStorage {
             SELECT m.*
             FROM match m
             JOIN participant p ON m.id = p.match_id
-            WHERE p.user_id = ?
+            WHERE p.user_id = ? AND m.is_tournament_part = 0
             ORDER BY m.started_at DESC
             LIMIT 10 OFFSET ?
         `);
@@ -98,12 +98,12 @@ export class Storage implements IStorage {
         stmt.run(matchId, userId);
     }
 
-    public addMatch(mode: number, isTournament: boolean): number {
+    public addMatch(mode: number, isTournamentPart: boolean): number {
         const stmt = this.db.prepare(`
             INSERT INTO match (mode, is_tournament_part)
             VALUES (?, ?);
         `);
-        const result = stmt.run(mode, isTournament ? 1 : 0);
+        const result = stmt.run(mode, isTournamentPart ? 1 : 0);
         return result.lastInsertRowid as number; 
     }
 

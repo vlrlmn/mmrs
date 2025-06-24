@@ -2,6 +2,32 @@ import Config from "../../config/Config";
 import CacheStorage from "../../domain/cache/CacheStorage";
 import { Storage } from "../../storage/Storage";
 
+type ProcessTournamentResultsParams = {
+    tournamentId: number,
+    status: number,
+    winnerId?: number,
+    results?: { userId: number; place: number }[]
+}
+
+export async function processTournamentResult(params: ProcessTournamentResultsParams) {
+   
+    const storage = new Storage();
+    if (params.results) {
+        const ratingUpdates: Array<{ id: number, rating: number }> = await resultsToUpdates(params.results);
+        console.log('processMatchResult: Applying rating updates:', ratingUpdates);
+        storage.updateRatingTransaction(params.tournamentId, ratingUpdates);
+        sendUpdatesToUMS(ratingUpdates);
+    }
+
+    if (params.winnerId) {
+        storage.updateMatchWinner(params.tournamentId, params.winnerId);
+    }
+
+    if (params.status === 2) {
+        storage.setMatchStatus(params.tournamentId, 'failed');
+    }
+}
+
 function getUpdatedRating(oldRating:number, place:number) {
     let newRating = oldRating;
     switch (place) {
@@ -23,13 +49,8 @@ function getUpdatedRating(oldRating:number, place:number) {
     return newRating;
 }
 
-export async function processMatchResult(  
-    matchId: number,
-    status: number,
-    results: { userId: number; place: number }[]
-) {
+async function resultsToUpdates(results: { userId: number; place: number }[]) {
     const cache = CacheStorage.getInstance();
-    const storage = new Storage();
     const updates: Array<{ id: number, rating: number }> = [];
     
     for (const result of results) {
@@ -37,24 +58,15 @@ export async function processMatchResult(
         if (currentRating === null) {
             throw new Error(`MMR for user ${result.userId} not found in cache`);
         }
-
         updates.push({ 
             id: result.userId, 
             rating: getUpdatedRating(currentRating, result.place) 
         });
     }
-    console.log('processMatchResult: Applying rating updates:', updates);
-    storage.updateRatingTransaction(matchId, updates);
-    const winner = results.find(r => r.place === 0);
-    if (winner) {
-        storage.updateMatchWinner(matchId, winner.userId);
-    }
+    return updates;
+}
 
-    for (const result of results) {
-        await cache.deletePlayerMatch(result.userId.toString());
-        await cache.deleteUserRating(result.userId);
-    }
-
+async function sendUpdatesToUMS(updates: Array<{ id: number, rating: number }>) {
     try {
         const res = await fetch(`http://${Config.getInstance().getUmsAddr()}/internal/rating/update`, {
             method: 'POST',
@@ -71,3 +83,4 @@ export async function processMatchResult(
         console.error('Failed to notify UMS:', e);
     }
 }
+
