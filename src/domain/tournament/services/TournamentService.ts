@@ -270,6 +270,7 @@ export class TournamentService implements ITournament {
         }
 
         finalMatch.broadcastMatchReady();
+        finalMatch.closeBroadcast();
     }
 
     public async handleMatchResult(matchId: number, results: Array<{ userId: number, place: number }>) {
