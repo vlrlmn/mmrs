@@ -4,12 +4,8 @@ export function matchCloseHandler(socket: any, matchmaker: MatchmakingService) {
   return () => {
     const id = matchmaker.getPlayerIdBySocket(socket);
     if (!id) {
-      console.log(`Unknown socket disconnected from matchmaking`);
       return;
     }
-
-    console.log(`(${id}) disconnected`);
-
     const pending = matchmaker.findPendingMatch(id);
     if (pending) {
       const opponent = pending.player1.id === id ? pending.player2 : pending.player1;

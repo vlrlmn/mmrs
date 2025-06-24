@@ -33,7 +33,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           socket.close();
         } 
         const player = createPlayer(userId.toString(), mmr, socket);
-        console.log(`(${userId}) joined searching for a match`);
         matchmaker.addPlayer(player);
         socket.send(JSON.stringify({ type: 'searching' }));
       } else if (message.type === 'match_confirmed') {
@@ -41,12 +40,9 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
             socket.send(JSON.stringify({ type: 'unauthorized', message: 'Unauthorized' }));
             return;
           }
-
-          console.log(`(${id}) confirmed the match`);
           const match = matchmaker.findPendingMatch(id.toString());
 
           if (!match) {
-            console.log(`No pending match found for ${id} yet`);
             return;
           }
 
@@ -56,7 +52,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           if (opponent.socket.readyState === 1) {
             opponent.socket.send(JSON.stringify({ type: 'opponent_confirmed' }));
           }
-          console.log(`Opponent confirmed for user ${id}`);
         }
 
       } else if (message.type === 'reject_match') {
@@ -65,7 +60,6 @@ export function matchmakingHandler(socket: any, matchmaker: MatchmakingService) 
           return;
         }
 
-        console.log(`(${id}) rejected the match`);
         const match = matchmaker.findPendingMatch(id.toString());
         if (match) {
           const opponent = match.player1.id === id.toString() ? match.player2 : match.player1;

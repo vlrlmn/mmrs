@@ -53,7 +53,6 @@ export default class TournamentMatch {
             await cache.savePlayerMatch(this.players[1].id, this._id.toString());
             return undefined;
         } catch (error){
-            console.log("TournamentMatch error: failed to cache users info", error);
             return error as Error;
         }   
     }
@@ -70,7 +69,6 @@ export default class TournamentMatch {
             await cache.deletePlayerMatch(this.players[1].id); 
             return undefined;
         } catch (error) {
-            console.log("TournamentMatch error: failed to remove users info from cache", error);
             return error as Error;
         }
     }
@@ -79,7 +77,6 @@ export default class TournamentMatch {
     public async notifyGameServer() : Promise<Error | undefined> {
         try {
             const playersIds = this.players.map(player => parseInt(player.id));
-            console.log(`Notify game server about match ${this._id} with players: ${playersIds.join(', ')}`);
             await notifyGameServer(this._id, playersIds);
             this.setStatus('active');
             return undefined;

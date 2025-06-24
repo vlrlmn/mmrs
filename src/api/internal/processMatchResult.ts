@@ -14,7 +14,6 @@ export async function processTournamentResult(params: ProcessTournamentResultsPa
     const storage = new Storage();
     if (params.results) {
         const ratingUpdates: Array<{ id: number, rating: number }> = await resultsToUpdates(params.results);
-        console.log('processMatchResult: Applying rating updates:', ratingUpdates);
         storage.updateRatingTransaction(params.tournamentId, ratingUpdates);
         sendUpdatesToUMS(ratingUpdates);
     }
@@ -73,12 +72,6 @@ async function sendUpdatesToUMS(updates: Array<{ id: number, rating: number }>) 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updates)
         });
-
-        if (!res.ok) {
-            console.error('UMS update failed', res.status);
-        } else {
-            console.log('UMS rating update succeeded');
-        }
     } catch (e) {
         console.error('Failed to notify UMS:', e);
     }

@@ -24,7 +24,6 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 		}
 
 		if (status === 2) {
-			console.log("rateMatchHandler : Match failed, no MMR changes made");
 			if (isTournament && TournamentManager.has(matchId)) {
 				const tournament = TournamentManager.getTournamentByMatchId(matchId);
 				if (!tournament) return;
@@ -46,7 +45,6 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 				try {
 					await cache.deletePlayerMatch(userId.toString());
 					await cache.deleteUserRating(userId);
-					console.log(`Cleaned up cache for user ${userId}`);
 				} catch (error) {
 					console.error(`Failed to clean cache for user ${userId}:`, error);
 				}
@@ -58,13 +56,11 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 		}
 
 		if (isTournament && TournamentManager.has(matchId)) {
-			console.log('rateMatchHandler : Tournament match result received');
 			const tournament = TournamentManager.getTournamentByMatchId(matchId);
 			if (!tournament) {
 				return reply.code(400).send({ type: 'error', message: 'Tournament not found for this match' });
 			}
 			await tournament.handleMatchResult(matchId, results);
-			console.log('rateMatchHandler : Tournament match handled');
 			return reply.code(200).send({ message: 'Tournament match result received' });
 		}
 

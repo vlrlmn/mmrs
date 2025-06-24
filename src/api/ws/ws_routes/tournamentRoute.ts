@@ -17,7 +17,6 @@ function getAvailableTournament(): { id: number, tournament: TournamentService }
     const storage = new Storage();
     current = new TournamentService(storage, () => {
       tournaments.delete(newId);
-      console.log(`Tournament ${newId} removed`);
     });
     tournaments.set(newId, current);
     return { id: newId, tournament: current };

@@ -22,8 +22,6 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
 
         if (tournament.hasPlayer(id)) {
           tournament.updatePlayerSocket(id, socket);
-          console.log(`(${id}) reconnected to tournament ${tid}`);
-          // socket.send(JSON.stringify({ type: 'reconnected', message: 'Reconnected for next stage' }));
           return;
         }
         let mmr = 1000;
@@ -40,10 +38,7 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
         }
 
         const player = createPlayer(id, mmr, socket);
-        console.log(`(${id}) joined tournament ${tid} with MMR ${mmr}`);
-
         const added = await tournament.addPlayer(player);
-        console.log(`(${id}) player added ${tid} in pool. MMR: ${mmr}`);
         if (!added) {
           socket.send(JSON.stringify({ type: 'error', message: 'Tournament already in progress' }));
           socket.close();
@@ -57,7 +52,6 @@ export function tournamentHandler(socket: any, tournament: TournamentService, ti
           socket.send(JSON.stringify({ type: 'unauthorized', message: 'Unauthorized' }));
           return;
         }
-        console.log(`(${id}) is leaving tournament ${tid}`);
         tournament.removePlayer(id);
         socket.send(JSON.stringify({ type: 'left', message: 'Left tournament' }));
         socket.close();
