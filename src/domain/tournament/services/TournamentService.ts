@@ -46,6 +46,7 @@ export class TournamentService implements ITournament {
                 match.closeBroadcast();
             } catch (error) {
                 console.error(`TournamentService failed: error handling match ${match.id}:`, error);
+            }
         }
         if (this.tournamentId) {
             this.storage.setMatchStatus(this.tournamentId, 'failed');
@@ -117,8 +118,6 @@ export class TournamentService implements ITournament {
         //     player2?.socket.close();
         // }
         // })
-        
-    }
 
     private saveTournament(): boolean {
         const tournamentId = this.storage.addMatch(2, false);
