@@ -37,7 +37,7 @@ export async function rateMatchHandler(req: FastifyRequest, reply: FastifyReply)
 					console.error(`Failed to clean cache for user ${userId}:`, error);
 				}
 			}
-			// There was a bug related to the bracets (return was inside for loop)
+
 			return reply.code(200).send(JSON.stringify({
 				type: 'match_failed', 
 				message: 'Match failed, no MMR changes made' 

@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { registerTournamentRoute} from './ws_routes/tournamentRoute';
 import { registerMatchmakingRoute } from './ws_routes/matchmakingRoute';
 

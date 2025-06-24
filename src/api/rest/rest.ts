@@ -6,7 +6,6 @@ import { statsHandler } from './handlers/statsHandler'
 
 import { opponentConfirmedHandler } from './handlers/opponentConfirmed'
 import { getRatingUpdatesHandler } from './handlers/getRatingUpdatesHandler'
-// import { createOfflineMatchHandler } from './handlers/createOfflineMatchHandler'
 import { reconnectPlayerHandler } from './handlers/reconnectPlayerHandler'
 import { rateMatchHandler } from './handlers/rateMatchHandler'
 
@@ -46,11 +45,6 @@ const routes: IHandler[] = [
     route: '/mmrs/api/rest/rating/updates/:userId',
     handler: getRatingUpdatesHandler
   },
-  // {
-  //   method: 'POST',
-  //   route: '/mmrs/api/rest/offline-match',
-  //   handler: createOfflineMatchHandler
-  // },
   {
     method: 'GET',
     route: '/mmrs/api/rest/reconnect',
